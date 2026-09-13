@@ -144,6 +144,8 @@ jobs:
           ANDROID_VERSION_TAG=$(grep -m1 "target:" build/release/release_config_map.textproto | sed 's/.*"\([^"]*\)".*/\1/')
           echo "android_version=${ANDROID_VERSION}" >> "$GITHUB_OUTPUT"
           echo "android_version_tag=${ANDROID_VERSION_TAG}" >> "$GITHUB_OUTPUT"
+      - name: Copy vendored trebledroid sources
+        run: ${{ github.workspace }}/scripts/copy-deps.sh /mnt/src
       - name: Apply patches
         working-directory: /mnt/src/
         run: |

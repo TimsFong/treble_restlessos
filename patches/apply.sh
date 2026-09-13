@@ -2,15 +2,21 @@
 
 set -e
 
-patches=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+patches=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 tree="$2"
 
 echo "Applying ${tree} patches:"
-[ -d "$patches/$tree" ] || { echo "  (no patches for tier '$tree', skipping)"; exit 0; }
+[ -d "$patches/$tree" ] || {
+    echo "  (no patches for tier '$tree', skipping)"
+    exit 0
+}
 
-for project in $(cd "$patches"/"$tree"; echo *); do
+for project in $(
+    cd "$patches"/"$tree"
+    echo *
+); do
     echo "> ${project}"
-    p="$(tr _ / <<<"$project" |sed -e 's;platform/;;g')"
+    p="$(tr _ / <<<"$project" | sed -e 's;platform/;;g')"
     [ "$p" == build ] && p=build/make
     [ "$p" == testing ] && p=platform_testing
     [ "$p" == treble/app ] && p=treble_app
@@ -21,7 +27,10 @@ for project in $(cd "$patches"/"$tree"; echo *); do
     for patch in "$patches"/"$tree"/"$project"/*.patch; do
         echo ">> ${patch}"
         if test -d .git; then
-            git am "$patch" || { git am --abort; exit 1; }
+            git am "$patch" || {
+                git am --abort
+                exit 1
+            }
         else
             # vendored snapshots under deps/ have no .git; git apply handles binary hunks
             git apply -p1 "$patch" || exit 1

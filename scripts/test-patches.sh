@@ -2,11 +2,10 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 TOP_DIR="$(dirname "$SCRIPT_DIR")"
 SRC_DIR="${TOP_DIR}/src"
 PATCHES_DIR="${TOP_DIR}/patches"
-
 
 usage() {
   cat <<EOF
@@ -32,23 +31,23 @@ RESET=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --debug)
-      DEBUG=1
-      shift
-      ;;
-    --reset)
-      RESET=1
-      shift
-      ;;
-    -h|--help)
-      usage
-      exit 0
-      ;;
-    *)
-      echo "unknown argument: $1" >&2
-      usage >&2
-      exit 1
-      ;;
+  --debug)
+    DEBUG=1
+    shift
+    ;;
+  --reset)
+    RESET=1
+    shift
+    ;;
+  -h | --help)
+    usage
+    exit 0
+    ;;
+  *)
+    echo "unknown argument: $1" >&2
+    usage >&2
+    exit 1
+    ;;
   esac
 done
 
@@ -63,6 +62,9 @@ if [[ "$RESET" -eq 1 ]]; then
   echo "==> resetting src/ to upstream base"
   "$SCRIPT_DIR/reset-sources.sh"
 fi
+
+echo "==> refreshing vendored trebledroid sources"
+"$SCRIPT_DIR/copy-deps.sh" "$SRC_DIR"
 
 TIERS=(trebledroid trebledroid-staging rom personal)
 if [[ "$DEBUG" -eq 1 ]]; then
