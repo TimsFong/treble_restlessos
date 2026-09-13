@@ -1,0 +1,16 @@
+[submodule "deps/trebledroid/device_phh_treble"]
+	path = deps/trebledroid/device_phh_treble
+	url = https://github.com/TrebleDroid/device_phh_treble
+	branch = android-16.0
+[submodule "deps/trebledroid/treble_app"]
+	path = deps/trebledroid/treble_app
+	url = https://github.com/TrebleDroid/treble_app
+	branch = master
+[submodule "deps/trebledroid/vendor_hardware_overlay"]
+	path = deps/trebledroid/vendor_hardware_overlay
+	url = https://github.com/TrebleDroid/vendor_hardware_overlay
+	branch = pie
+[submodule "deps/trebledroid/vendor_interfaces"]
+	path = deps/trebledroid/vendor_interfaces
+	url = https://github.com/TrebleDroid/vendor_interfaces
+	branch = android-16.0
