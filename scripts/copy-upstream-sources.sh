@@ -4,10 +4,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 TOP_DIR="$(dirname "$SCRIPT_DIR")"
-DEPS_DIR="${TOP_DIR}/deps/trebledroid"
+UPSTREAM_DIR="${TOP_DIR}/upstream/trebledroid"
 SRC_DIR="${1:-${TOP_DIR}/src}"
 
-# vendored trebledroid snapshots: <deps dir>:<path under src/>
+# vendored trebledroid snapshots: <upstream dir>:<path under src/>
 PAIRS=(
   device_phh_treble:device/phh/treble
   treble_app:treble_app
@@ -20,12 +20,12 @@ PAIRS=(
 for pair in "${PAIRS[@]}"; do
   d="${pair%%:*}"
   t="${SRC_DIR}/${pair#*:}"
-  [ -d "$DEPS_DIR/$d" ] || {
-    echo "ERROR: missing deps/trebledroid/$d" >&2
+  [ -d "$UPSTREAM_DIR/$d" ] || {
+    echo "ERROR: missing upstream/trebledroid/$d" >&2
     exit 1
   }
   rm -rf "$t"
   mkdir -p "$t"
-  cp -aT "$DEPS_DIR/$d" "$t"
+  cp -aT "$UPSTREAM_DIR/$d" "$t"
   echo "$d -> ${pair#*:}"
 done

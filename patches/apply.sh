@@ -32,7 +32,7 @@ for project in $(
                 exit 1
             }
         else
-            # vendored snapshots under deps/ have no .git; git apply handles binary hunks
+            # vendored snapshots under upstream/ have no .git; git apply handles binary hunks
             git apply -p1 "$patch" || exit 1
         fi
     done
