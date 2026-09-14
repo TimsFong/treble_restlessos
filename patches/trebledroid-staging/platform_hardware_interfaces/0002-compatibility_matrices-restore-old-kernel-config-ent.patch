@@ -1,7 +1,7 @@
 From 8abc4c7ad4b13a7c04d1a34e661e6ed014cd9738 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 5 Sep 2026 11:50:54 +0100
-Subject: [PATCH 2/3] compatibility_matrices: restore old kernel config
+Subject: [PATCH 2/4] compatibility_matrices: restore old kernel config
  entries
 
 Restore the framework compatibility matrix for level 6 along with the
