@@ -1,0 +1,34 @@
+From bac69541eb66a4270427257988452a65dd2c56f7 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 26 Sep 2026 22:38:39 +0100
+Subject: [PATCH 4/4] disable apexd early vm bootstrap for aosp_current
+
+RELEASE_AVF_ENABLE_EARLY_VM pulls com.android.virt into the apexd
+bootstrap set. the virt apex payload is erofs, and vendor kernels
+without the erofs driver (4.4/4.9 exynos/qcom/msm8996) fail the mount
+with ENODEV. apexd-bootstrap runs with reboot_on_failure, so the device
+reboots to bootloader with bootstrap-apexd-failed before init ever
+reaches second stage.
+
+disabling the flag for aosp_current removes virt from the bootstrap
+set; it is still activated by the full apexd after /data, where a
+failure is logged but not fatal. pVM/AVF is unusable on these kernels
+either way.
+---
+ flag_values/cp2a/RELEASE_AVF_ENABLE_EARLY_VM.textproto | 4 ++++
+ 1 file changed, 4 insertions(+)
+ create mode 100644 flag_values/cp2a/RELEASE_AVF_ENABLE_EARLY_VM.textproto
+
+diff --git a/flag_values/cp2a/RELEASE_AVF_ENABLE_EARLY_VM.textproto b/flag_values/cp2a/RELEASE_AVF_ENABLE_EARLY_VM.textproto
+new file mode 100644
+index 0000000..be4e209
+--- /dev/null
++++ b/flag_values/cp2a/RELEASE_AVF_ENABLE_EARLY_VM.textproto
+@@ -0,0 +1,4 @@
++name: "RELEASE_AVF_ENABLE_EARLY_VM"
++value {
++  bool_value: false
++}
+-- 
+2.55.0
+
