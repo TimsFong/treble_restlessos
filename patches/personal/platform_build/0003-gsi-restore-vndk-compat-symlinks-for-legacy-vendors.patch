@@ -1,0 +1,76 @@
+From a1e817a88ee3bd921f47fe208d5178f83afee66d Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 27 Sep 2026 00:11:06 +0100
+Subject: [PATCH 3/3] gsi: restore vndk compat symlinks for legacy vendors
+
+pre-q vendor partitions ship their own ld.config.txt files with hardcoded
+/system/${LIB}/vndk-${VER} and /system/${LIB}/vndk-sp-${VER} search paths.
+the a16 generation still provided these paths as symlinks into the vndk
+apexes; the a17 drop lost them, so old devices fail to resolve vndk and
+vndk-sp libraries and break at boot. restore the symlinks for v28 and v29,
+the versions carried by the trebledroid device tree.
+---
+ target/product/gsi/Android.bp | 40 ++++++++++++++++++++++++++++++++++-
+ 1 file changed, 39 insertions(+), 1 deletion(-)
+
+diff --git a/target/product/gsi/Android.bp b/target/product/gsi/Android.bp
+index 1dea323a..ffbe79e9 100644
+--- a/target/product/gsi/Android.bp
++++ b/target/product/gsi/Android.bp
+@@ -74,6 +74,44 @@ gsi_symlinks = [
+     },
+ ]
+ 
++// compat symlinks for legacy vendor partitions: pre-q vendor ld.config.txt files
++// hardcode /system/${LIB}/vndk-${VER} and vndk-sp-${VER} search paths. point them
++// into the matching vndk apex so those paths keep resolving on old devices.
++vndk_compat_symlinks = [
++    {
++        target: "/apex/com.android.vndk.v28/lib",
++        name: "lib/vndk-28",
++    },
++    {
++        target: "/apex/com.android.vndk.v28/lib64",
++        name: "lib64/vndk-28",
++    },
++    {
++        target: "/apex/com.android.vndk.v28/lib",
++        name: "lib/vndk-sp-28",
++    },
++    {
++        target: "/apex/com.android.vndk.v28/lib64",
++        name: "lib64/vndk-sp-28",
++    },
++    {
++        target: "/apex/com.android.vndk.v29/lib",
++        name: "lib/vndk-29",
++    },
++    {
++        target: "/apex/com.android.vndk.v29/lib64",
++        name: "lib64/vndk-29",
++    },
++    {
++        target: "/apex/com.android.vndk.v29/lib",
++        name: "lib/vndk-sp-29",
++    },
++    {
++        target: "/apex/com.android.vndk.v29/lib64",
++        name: "lib64/vndk-sp-29",
++    },
++]
++
+ android_filesystem_defaults {
+     name: "android_gsi_defaults",
+     defaults: [
+@@ -81,7 +119,7 @@ android_filesystem_defaults {
+         "system_ext_image_defaults",
+         "product_image_defaults",
+     ],
+-    symlinks: gsi_symlinks,
++    symlinks: gsi_symlinks + vndk_compat_symlinks,
+     dirs: ["cache"],
+     deps: [
+         ///////////////////////////////////////////
+-- 
+2.55.0
+
