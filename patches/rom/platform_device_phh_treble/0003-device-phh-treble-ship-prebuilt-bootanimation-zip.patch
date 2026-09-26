@@ -1,7 +1,7 @@
 From f6574e647de7b5eb23c76ca84c122da0ad595f00 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 26 Sep 2026 21:15:19 +0100
-Subject: [PATCH 3/3] device/phh/treble: ship prebuilt bootanimation zip
+Subject: [PATCH 3/4] device/phh/treble: ship prebuilt bootanimation zip
 
 Replace the build-time-zipped source frames with a prebuilt
 bootanimation.zip installed via PRODUCT_COPY_FILES to
