@@ -37,7 +37,7 @@ done
 
 # every repo dir that appears in any patch tier
 projects=$(
-  for tier in trebledroid trebledroid-staging rom personal release-builds debug-builds; do
+  for tier in trebledroid rom personal release-builds debug-builds; do
     d="${PATCHES_DIR}/${tier}"
     [[ -d "$d" ]] && ls "$d"
   done | sort -u

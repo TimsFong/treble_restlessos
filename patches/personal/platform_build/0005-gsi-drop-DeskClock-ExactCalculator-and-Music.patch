@@ -1,0 +1,30 @@
+From 5a120ddd59859984a6f2bb5be7a214c9d1e33c62 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 27 Sep 2026 22:14:24 +0100
+Subject: [PATCH 5/5] gsi: drop DeskClock, ExactCalculator and Music
+
+niche-use preinstalled apps that duplicate what most users install
+anyway; saves a few mb of system space.
+---
+ target/product/handheld_product.mk | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/target/product/handheld_product.mk b/target/product/handheld_product.mk
+index b276cf9..4803e57 100644
+--- a/target/product/handheld_product.mk
++++ b/target/product/handheld_product.mk
+@@ -24,11 +24,8 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/media_product.mk)
+ PRODUCT_PACKAGES += \
+     AppStore \
+     Contacts \
+-    DeskClock \
+-    ExactCalculator \
+     Gallery2 \
+     LatinIME \
+-    Music \
+     preinstalled-packages-platform-handheld-product.xml \
+     SettingsIntelligence \
+     SpeechServices \
+-- 
+2.55.0
+
