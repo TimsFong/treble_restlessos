@@ -1,7 +1,7 @@
 From 5a120ddd59859984a6f2bb5be7a214c9d1e33c62 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 27 Sep 2026 22:14:24 +0100
-Subject: [PATCH 5/5] gsi: drop DeskClock, ExactCalculator and Music
+Subject: [PATCH 4/4] gsi: drop DeskClock, ExactCalculator and Music
 
 niche-use preinstalled apps that duplicate what most users install
 anyway; saves a few mb of system space.

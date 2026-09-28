@@ -1,7 +1,7 @@
 From a1e817a88ee3bd921f47fe208d5178f83afee66d Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 27 Sep 2026 00:11:06 +0100
-Subject: [PATCH 3/5] gsi: restore vndk compat symlinks for legacy vendors
+Subject: [PATCH 3/4] gsi: restore vndk compat symlinks for legacy vendors
 
 pre-q vendor partitions ship their own ld.config.txt files with hardcoded
 /system/${LIB}/vndk-${VER} and /system/${LIB}/vndk-sp-${VER} search paths.
