@@ -1,7 +1,7 @@
 From bac69541eb66a4270427257988452a65dd2c56f7 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 26 Sep 2026 22:38:39 +0100
-Subject: [PATCH 4/4] disable apexd early vm bootstrap for aosp_current
+Subject: [PATCH 4/5] disable apexd early vm bootstrap for aosp_current
 
 RELEASE_AVF_ENABLE_EARLY_VM pulls com.android.virt into the apexd
 bootstrap set. the virt apex payload is erofs, and vendor kernels
