@@ -1,4 +1,4 @@
-From 1268ecc02835684e9fad323f99ecfb90879e179a Mon Sep 17 00:00:00 2001
+From d6aad6378c50fedda87e5d4825b2c36a0e63d74e Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 08:40:32 +0100
 Subject: [PATCH 2/2] gsi: product trim adjustments
@@ -7,12 +7,13 @@ gsi product trims: restore vndk compat symlinks for legacy vendor
 partitions, drop the stock deskclock, calculator and music apps in
 favour of the rom replacements, drop the vanadium browser (trichrome
 chrome) while keeping the trichrome webview provider the platform
-requires, and drop the traceur system tracing ui.
+requires, drop the traceur system tracing ui, and drop the aosp
+gallery (gallery2).
 ---
  target/product/gsi/Android.bp      | 40 +++++++++++++++++++++++++++++-
- target/product/handheld_product.mk |  4 ---
+ target/product/handheld_product.mk |  5 ----
  target/product/handheld_system.mk  |  1 -
- 3 files changed, 39 insertions(+), 6 deletions(-)
+ 3 files changed, 39 insertions(+), 7 deletions(-)
 
 diff --git a/target/product/gsi/Android.bp b/target/product/gsi/Android.bp
 index 1dea323..ffbe79e 100644
@@ -73,16 +74,16 @@ index 1dea323..ffbe79e 100644
      deps: [
          ///////////////////////////////////////////
 diff --git a/target/product/handheld_product.mk b/target/product/handheld_product.mk
-index b276cf9..e3df012 100644
+index b276cf9..7a93d49 100644
 --- a/target/product/handheld_product.mk
 +++ b/target/product/handheld_product.mk
-@@ -24,18 +24,14 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/media_product.mk)
+@@ -24,18 +24,13 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/media_product.mk)
  PRODUCT_PACKAGES += \
      AppStore \
      Contacts \
 -    DeskClock \
 -    ExactCalculator \
-     Gallery2 \
+-    Gallery2 \
      LatinIME \
 -    Music \
      preinstalled-packages-platform-handheld-product.xml \
