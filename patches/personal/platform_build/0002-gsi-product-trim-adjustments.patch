@@ -1,17 +1,18 @@
-From 23f8d55172fe4b562c6e808760858e4243b48f13 Mon Sep 17 00:00:00 2001
+From 1268ecc02835684e9fad323f99ecfb90879e179a Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 08:40:32 +0100
 Subject: [PATCH 2/2] gsi: product trim adjustments
 
 gsi product trims: restore vndk compat symlinks for legacy vendor
 partitions, drop the stock deskclock, calculator and music apps in
-favour of the rom replacements, and drop the vanadium browser
-(trichrome chrome) while keeping the trichrome webview provider the
-platform requires.
+favour of the rom replacements, drop the vanadium browser (trichrome
+chrome) while keeping the trichrome webview provider the platform
+requires, and drop the traceur system tracing ui.
 ---
  target/product/gsi/Android.bp      | 40 +++++++++++++++++++++++++++++-
  target/product/handheld_product.mk |  4 ---
- 2 files changed, 39 insertions(+), 5 deletions(-)
+ target/product/handheld_system.mk  |  1 -
+ 3 files changed, 39 insertions(+), 6 deletions(-)
 
 diff --git a/target/product/gsi/Android.bp b/target/product/gsi/Android.bp
 index 1dea323..ffbe79e 100644
@@ -94,6 +95,18 @@ index b276cf9..e3df012 100644
      frameworks-base-overlays
  
  PRODUCT_PACKAGES_DEBUG += \
+diff --git a/target/product/handheld_system.mk b/target/product/handheld_system.mk
+index 83170ad..b7113d3 100644
+--- a/target/product/handheld_system.mk
++++ b/target/product/handheld_system.mk
+@@ -70,7 +70,6 @@ PRODUCT_PACKAGES += \
+     SharedStorageBackup \
+     SimAppDialog \
+     TeleService \
+-    Traceur \
+     UserDictionaryProvider \
+     VpnDialogs \
+     vr \
 -- 
 2.55.0
 
