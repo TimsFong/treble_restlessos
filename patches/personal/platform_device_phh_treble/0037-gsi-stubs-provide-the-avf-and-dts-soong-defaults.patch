@@ -1,0 +1,47 @@
+From 1f2a6c33e1d21a90c69410fbfa83e2db9a4a1105 Mon Sep 17 00:00:00 2001
+From: Christopher A. Williamson <contact@chrisaw.io>
+Date: Mon, 28 Sep 2026 20:15:00 +0100
+Subject: [PATCH 37/37] gsi stubs: provide the avf and dts soong defaults
+
+the virtualization sources are excluded from the gsi manifest sync, but
+modules elsewhere in the tree (system/core init microdroid variant,
+system/librustutils, system/secretkeeper, external/gsc-utils and the
+trusty generic-arm64 reference dt) reference the soong defaults defined
+in packages/modules/Virtualization. reproduce those definitions with
+every feature flag in its default (disabled) state so soong analysis
+resolves without the virtualization tree present.
+
+the dtc host tool is unaffected; it lives in external/dtc.
+---
+ device/phh/treble/gsi_stubs/Android.bp | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+ create mode 100644 device/phh/treble/gsi_stubs/Android.bp
+
+diff --git a/device/phh/treble/gsi_stubs/Android.bp b/device/phh/treble/gsi_stubs/Android.bp
+new file mode 100644
+index 0000000..aba5b8b
+--- /dev/null
++++ b/device/phh/treble/gsi_stubs/Android.bp
+@@ -0,0 +1,19 @@
++// stub soong defaults for modules outside the virtualization tree that
++// reference the android virtualization framework build flags. the
++// virtualization sources are excluded from the gsi manifest sync, so the
++// definitions that normally live in packages/modules/Virtualization are
++// reproduced here with every feature flag in its default (disabled) state.
++
++cc_defaults {
++    name: "avf_build_flags_cc",
++}
++
++rust_defaults {
++    name: "avf_build_flags_rust",
++}
++
++genrule_defaults {
++    name: "dts_to_dtb",
++    tools: ["dtc"],
++    cmd: "FILES=($(in)) && $(location dtc) -@ -I dts -O dtb $${FILES[-1]} -o $(out)",
++}
+--
+2.55.0
+
