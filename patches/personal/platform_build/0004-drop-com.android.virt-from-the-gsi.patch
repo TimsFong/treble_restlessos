@@ -1,7 +1,7 @@
-From 59d9a93bc078d511dd4a482ba01cd1d4c0d4620e Mon Sep 17 00:00:00 2001
+From 43e74aa473d750b17427d1636fd8ac5dd34fc360 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Sun, 27 Sep 2026 21:54:51 +0100
-Subject: [PATCH 4/4] drop com.android.virt from the gsi
+Date: Mon, 28 Sep 2026 01:12:18 +0100
+Subject: [PATCH 4/5] drop com.android.virt from the gsi
 
 the AVF/virtualization apex serves pKVM-based VM workloads (crosvm,
 virtualizationservice, microdroid). none of that is reachable on the
