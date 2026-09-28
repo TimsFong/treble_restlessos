@@ -26,6 +26,7 @@ for project in $(
         [ "$p" == system/fs/fs/mgr ] && p=system/fs/fs_mgr
         [ "$p" == vendor/hardware/overlay ] && p=vendor/hardware_overlay
         [ "$p" == vendor/partner/gms ] && p=vendor/partner_gms
+        [ "$p" == external/open/dice ] && p=external/open-dice
         pushd "$p" &>/dev/null
         for patch in "$patches"/"$tree"/"$project"/*.patch; do
                 echo ">> ${patch}"
