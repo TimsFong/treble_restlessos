@@ -5,6 +5,7 @@ Subject: [PATCH 38/38] gsi stubs: vendor the avf rust crates used outside the
  virtualization tree
 
 ---
+---
  gsi_stubs/android_display_backend/Android.bp  |   78 +
  .../aidl/android/crosvm/DisplayConfig.aidl    |   25 +
  .../crosvm/ICrosvmAndroidDisplayService.aidl  |   41 +
@@ -52,10 +53,18 @@ Subject: [PATCH 38/38] gsi stubs: vendor the avf rust crates used outside the
  .../include/microdroid/metadata.h             |   33 +
  .../microdroid_payload_metadata/metadata.cc   |   74 +
  .../metadata.proto                            |   88 +
+ .../virtualizationservice_aidl/Android.bp     |   64 +
+ .../system/virtualizationcommon/Atom.aidl     |   41 +
+ .../virtualizationcommon/Certificate.aidl     |   27 +
+ .../virtualizationcommon/DeathReason.aidl     |   56 +
+ .../virtualizationcommon/ErrorCode.aidl       |   44 +
+ .../IEncryptedStoreKEK.aidl                   |   40 +
+ .../virtualmachineservice/IGuestAgent.aidl    |   48 +
+ .../IVirtualMachineService.aidl               |  100 +
  gsi_stubs/vm_payload/Android.bp               |   17 +
  gsi_stubs/vm_payload/include/vm_main.h        |   39 +
  gsi_stubs/vm_payload/include/vm_payload.h     |  320 ++
- 50 files changed, 9505 insertions(+)
+ 58 files changed, 9925 insertions(+)
  create mode 100644 gsi_stubs/android_display_backend/Android.bp
  create mode 100644 gsi_stubs/android_display_backend/aidl/android/crosvm/DisplayConfig.aidl
  create mode 100644 gsi_stubs/android_display_backend/aidl/android/crosvm/ICrosvmAndroidDisplayService.aidl
@@ -103,6 +112,14 @@ Subject: [PATCH 38/38] gsi stubs: vendor the avf rust crates used outside the
  create mode 100644 gsi_stubs/microdroid_payload_metadata/include/microdroid/metadata.h
  create mode 100644 gsi_stubs/microdroid_payload_metadata/metadata.cc
  create mode 100644 gsi_stubs/microdroid_payload_metadata/metadata.proto
+ create mode 100644 gsi_stubs/virtualizationservice_aidl/Android.bp
+ create mode 100644 gsi_stubs/virtualizationservice_aidl/android/system/virtualizationcommon/Atom.aidl
+ create mode 100644 gsi_stubs/virtualizationservice_aidl/android/system/virtualizationcommon/Certificate.aidl
+ create mode 100644 gsi_stubs/virtualizationservice_aidl/android/system/virtualizationcommon/DeathReason.aidl
+ create mode 100644 gsi_stubs/virtualizationservice_aidl/android/system/virtualizationcommon/ErrorCode.aidl
+ create mode 100644 gsi_stubs/virtualizationservice_aidl/android/system/virtualizationcommon/IEncryptedStoreKEK.aidl
+ create mode 100644 gsi_stubs/virtualizationservice_aidl/android/system/virtualmachineservice/IGuestAgent.aidl
+ create mode 100644 gsi_stubs/virtualizationservice_aidl/android/system/virtualmachineservice/IVirtualMachineService.aidl
  create mode 100644 gsi_stubs/vm_payload/Android.bp
  create mode 100644 gsi_stubs/vm_payload/include/vm_main.h
  create mode 100644 gsi_stubs/vm_payload/include/vm_payload.h
@@ -9520,6 +9537,474 @@ index 0000000..f3d3dfd
 +  // Whether microdroid_manager should delay setup the encrypted store until
 +  // payload sends the signal to do it.
 +  bool delay_encrypted_store_setup = 3;
++}
+diff --git a/gsi_stubs/virtualizationservice_aidl/Android.bp b/gsi_stubs/virtualizationservice_aidl/Android.bp
+new file mode 100644
+index 0000000..1aa414a
+--- /dev/null
++++ b/gsi_stubs/virtualizationservice_aidl/Android.bp
+@@ -0,0 +1,64 @@
++// vendored from packages/modules/Virtualization/android/virtualizationservice/aidl.
++// the virtualization sources are excluded from the gsi manifest sync but
++// frameworks/native links the servicemanager rpc library against
++// android.system.virtualmachineservice, so the virtualmachineservice and
++// virtualizationcommon interfaces are reproduced here with the backends
++// used outside the virtualization tree enabled.
++
++package {
++    default_applicable_licenses: ["Android-Apache-2.0"],
++}
++
++aidl_interface {
++    name: "android.system.virtualmachineservice",
++    srcs: ["android/system/virtualmachineservice/**/*.aidl"],
++    imports: [
++        "android.hardware.security.secretkeeper-V2",
++        "android.system.virtualizationcommon",
++        "rpc_servicemanager_aidl",
++    ],
++    unstable: true,
++    backend: {
++        java: {
++            enabled: false,
++        },
++        rust: {
++            enabled: true,
++            apex_available: [
++                "com.android.virt",
++                "com.android.compos",
++            ],
++        },
++    },
++    visibility: ["//visibility:public"],
++}
++
++aidl_interface {
++    name: "android.system.virtualizationcommon",
++    srcs: ["android/system/virtualizationcommon/**/*.aidl"],
++    unstable: true,
++    backend: {
++        java: {
++            sdk_version: "module_current",
++            apex_available: [
++                "com.android.virt",
++                "//apex_available:platform",
++            ],
++        },
++        ndk: {
++            apex_available: [
++                "com.android.virt",
++                "com.android.compos",
++            ],
++        },
++        rust: {
++            enabled: true,
++            apex_available: [
++                "//apex_available:platform",
++                "com.android.virt",
++                "com.android.compos",
++            ],
++        },
++    },
++    visibility: ["//visibility:public"],
++}
+diff --git a/gsi_stubs/virtualizationservice_aidl/android/system/virtualizationcommon/Atom.aidl b/gsi_stubs/virtualizationservice_aidl/android/system/virtualizationcommon/Atom.aidl
+new file mode 100644
+index 0000000..2500de4
+--- /dev/null
++++ b/gsi_stubs/virtualizationservice_aidl/android/system/virtualizationcommon/Atom.aidl
+@@ -0,0 +1,41 @@
++/*
++ * Copyright 2025 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package android.system.virtualizationcommon;
++
++/** {@hide} */
++union Atom {
++    CgroupMemoryBreachReported cgroupMemoryBreachReported;
++    FsckFailedReported fsckFailedReported;
++    GetOrCreateSkSecretFailedReported getOrCreateSkSecretFailedReported;
++    PsiMonitorFailedReported psiMonitorFailedReported;
++
++    parcelable CgroupMemoryBreachReported {
++        long highBreachCount;
++        long highMemoryPeakMb;
++    }
++
++    parcelable FsckFailedReported {
++        int exitCode;
++    }
++
++    parcelable GetOrCreateSkSecretFailedReported {
++        int retryCount;
++    }
++
++    parcelable PsiMonitorFailedReported {
++        long exponentialBackoffSeconds;
++    }
++}
+diff --git a/gsi_stubs/virtualizationservice_aidl/android/system/virtualizationcommon/Certificate.aidl b/gsi_stubs/virtualizationservice_aidl/android/system/virtualizationcommon/Certificate.aidl
+new file mode 100644
+index 0000000..d587541
+--- /dev/null
++++ b/gsi_stubs/virtualizationservice_aidl/android/system/virtualizationcommon/Certificate.aidl
+@@ -0,0 +1,27 @@
++/*
++ * Copyright 2023 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package android.system.virtualizationcommon;
++
++/**
++ * This encodes a X.509 certificate returned in the pVM remote attestation.
++ */
++parcelable Certificate {
++    /**
++     * Contains the bytes of a DER-encoded X.509 certificate.
++     */
++    byte[] encodedCertificate;
++}
+diff --git a/gsi_stubs/virtualizationservice_aidl/android/system/virtualizationcommon/DeathReason.aidl b/gsi_stubs/virtualizationservice_aidl/android/system/virtualizationcommon/DeathReason.aidl
+new file mode 100644
+index 0000000..0164de4
+--- /dev/null
++++ b/gsi_stubs/virtualizationservice_aidl/android/system/virtualizationcommon/DeathReason.aidl
+@@ -0,0 +1,56 @@
++/*
++ * Copyright 2022 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package android.system.virtualizationcommon;
++
++/**
++ * The reason why a VM died.
++ */
++@Backing(type="int")
++enum DeathReason {
++    /** There was an error waiting for the VM. */
++    INFRASTRUCTURE_ERROR = 0,
++    /** The VM was killed. */
++    KILLED = 1,
++    /** The VM died for an unknown reason. */
++    UNKNOWN = 2,
++    /** The VM requested to shut down. */
++    SHUTDOWN = 3,
++    /** crosvm had an error starting the VM. */
++    START_FAILED = 4,
++    /** The VM requested to reboot, possibly as the result of a kernel panic. */
++    REBOOT = 5,
++    /** The VM or crosvm crashed. */
++    CRASH = 6,
++    /** The pVM firmware failed to verify the VM because the public key doesn't match. */
++    PVM_FIRMWARE_PUBLIC_KEY_MISMATCH = 7,
++    /** The pVM firmware failed to verify the VM because the instance image changed. */
++    PVM_FIRMWARE_INSTANCE_IMAGE_CHANGED = 8,
++    // 9 & 10 intentionally removed.
++    /** The microdroid failed to connect to VirtualizationService's RPC server. */
++    MICRODROID_FAILED_TO_CONNECT_TO_VIRTUALIZATION_SERVICE = 11,
++    /** The payload for microdroid is changed. */
++    MICRODROID_PAYLOAD_HAS_CHANGED = 12,
++    /** The microdroid failed to verify given payload APK. */
++    MICRODROID_PAYLOAD_VERIFICATION_FAILED = 13,
++    /** The VM config for microdroid is invalid (e.g. missing tasks). */
++    MICRODROID_INVALID_PAYLOAD_CONFIG = 14,
++    /** There was a runtime error while running microdroid manager. */
++    MICRODROID_UNKNOWN_RUNTIME_ERROR = 15,
++    /** The VM killed due to hangup */
++    HANGUP = 16,
++    /** The VCPU stalled */
++    WATCHDOG_REBOOT = 17,
++}
+diff --git a/gsi_stubs/virtualizationservice_aidl/android/system/virtualizationcommon/ErrorCode.aidl b/gsi_stubs/virtualizationservice_aidl/android/system/virtualizationcommon/ErrorCode.aidl
+new file mode 100644
+index 0000000..9b39bc0
+--- /dev/null
++++ b/gsi_stubs/virtualizationservice_aidl/android/system/virtualizationcommon/ErrorCode.aidl
+@@ -0,0 +1,44 @@
++/*
++ * Copyright 2022 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package android.system.virtualizationcommon;
++
++/**
++ * Errors reported from within a VM.
++ */
++@Backing(type="int")
++enum ErrorCode {
++    /**
++     * Error code for all other errors not listed below.
++     */
++    UNKNOWN = 0,
++
++    /**
++     * Error code indicating that the payload can't be verified due to various reasons (e.g invalid
++     * merkle tree, invalid formats, etc).
++     */
++    PAYLOAD_VERIFICATION_FAILED = 1,
++
++    /**
++     * Error code indicating that the payload is verified, but has changed to be incompatible with
++     * the previous payload. This payload has not been allowed to boot to protect the VM's data.
++     */
++    PAYLOAD_CHANGED = 2,
++
++    /**
++     * Error code indicating that the payload config is invalid.
++     */
++    PAYLOAD_INVALID_CONFIG = 3,
++}
+diff --git a/gsi_stubs/virtualizationservice_aidl/android/system/virtualizationcommon/IEncryptedStoreKEK.aidl b/gsi_stubs/virtualizationservice_aidl/android/system/virtualizationcommon/IEncryptedStoreKEK.aidl
+new file mode 100644
+index 0000000..3558a57
+--- /dev/null
++++ b/gsi_stubs/virtualizationservice_aidl/android/system/virtualizationcommon/IEncryptedStoreKEK.aidl
+@@ -0,0 +1,40 @@
++/*
++ * Copyright 2025 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package android.system.virtualizationcommon;
++
++/** {@hide} */
++interface IEncryptedStoreKEK {
++    /**
++     * Returns a KEK used to set up the encrypted store, or {@code null} if encrypted store
++     * hasn't been set up yet.
++     *
++     * <p>If {@code null} is returned, then {@code microdroid_manager} should:
++     *  1. Use the obtained salt to create a new key to set up encrypted store with.
++     *  2. Encrypt it with a different key.
++     *  3. Send resulting KEK back to the Android host by calling {@code onKEKCreated} callback.
++     */
++    @nullable byte[] getKEK();
++
++    /**
++     * A callback {@code microdroid_manager} should call when new KEK is created.
++     *
++     * <p>Android host is expected to store the resulting kek on disk (e.g. in app's private CE
++     * directory). On subsequent VM boots {@code microdroid_manager} will request the KEK from
++     * the Android host, and then use it to set up the encrypted store.
++     */
++    void onKEKCreated(in byte[] kek);
++}
+diff --git a/gsi_stubs/virtualizationservice_aidl/android/system/virtualmachineservice/IGuestAgent.aidl b/gsi_stubs/virtualizationservice_aidl/android/system/virtualmachineservice/IGuestAgent.aidl
+new file mode 100644
+index 0000000..6ff47fe
+--- /dev/null
++++ b/gsi_stubs/virtualizationservice_aidl/android/system/virtualmachineservice/IGuestAgent.aidl
+@@ -0,0 +1,48 @@
++/*
++ * Copyright 2025 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package android.system.virtualmachineservice;
++
++/** {@hide} */
++interface IGuestAgent {
++    /**
++     * Starts a vsock server to dump the VM's state, and return a port number for the listening
++     * vsock. The guest agent must open a vsock server which accepts one client, and then sends VM's
++     * dump to the client. Writing to the client vsock must be done within 5 seconds. Otherwise, the
++     * requester may regard it as a timeout.
++     *
++     * TODO(b/395205629): Use IBinder::Interface::dump().
++     */
++    int startDumpVsockServer(in String[] args);
++
++    /**
++     * Starts or stops traced_relay Perfetto service inside a VM. This process acts as a relay to
++     * send the tracing data from the VM back to the traced process on Android host.
++     * If {@code start} is {@code true} then traced_relay service is started, otherwise it is
++     * stopped.
++     *
++     * NOTE: it is recommended to only implement this API for debuggable pVMs.
++     * See Microdroid implementation for reference.
++     */
++    void startOrStopTracedRelayService(boolean start);
++
++    /**
++     * Shuts the VM down gracefully.
++     */
++    @SuppressWarnings(value={"mixed-oneway"}) oneway void shutdownAsync();
++
++    /** Requests the VM to trim its memory usage. */
++    @SuppressWarnings(value={"mixed-oneway"}) oneway void trimAsync();
++}
+diff --git a/gsi_stubs/virtualizationservice_aidl/android/system/virtualmachineservice/IVirtualMachineService.aidl b/gsi_stubs/virtualizationservice_aidl/android/system/virtualmachineservice/IVirtualMachineService.aidl
+new file mode 100644
+index 0000000..f6944b7
+--- /dev/null
++++ b/gsi_stubs/virtualizationservice_aidl/android/system/virtualmachineservice/IVirtualMachineService.aidl
+@@ -0,0 +1,100 @@
++/*
++ * Copyright 2021 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package android.system.virtualmachineservice;
++
++import android.hardware.security.secretkeeper.ISecretkeeper;
++import android.os.IRpcProvider;
++import android.system.virtualizationcommon.Atom;
++import android.system.virtualizationcommon.Certificate;
++import android.system.virtualizationcommon.ErrorCode;
++import android.system.virtualizationcommon.IEncryptedStoreKEK;
++import android.system.virtualmachineservice.IGuestAgent;
++
++/** {@hide} */
++interface IVirtualMachineService {
++    /**
++     * Port number that VirtualMachineService listens on connections from the guest VMs for the
++     * tombtones
++     */
++    const int VM_TOMBSTONES_SERVICE_PORT = 2000;
++
++    /**
++     * Notifies that the payload has started.
++     */
++    void notifyPayloadStarted();
++
++    /**
++     * Notifies that the payload is ready to serve.
++     */
++    void notifyPayloadReady();
++
++    /**
++     * Notifies that the payload has finished.
++     */
++    void notifyPayloadFinished(int exitCode);
++
++    /**
++     * Notifies that an error has occurred inside the VM.
++     */
++    void notifyError(ErrorCode errorCode, in String message);
++
++    /**
++     * Requests a certificate chain for the provided certificate signing request (CSR).
++     *
++     * @param csr The certificate signing request.
++     * @param testMode Whether the request is for test purposes.
++     * @return A sequence of DER-encoded X.509 certificates that make up the attestation
++     *         key's certificate chain. The attestation key is provided in the CSR.
++     */
++    Certificate[] requestAttestation(in byte[] csr, in boolean testMode);
++
++    /**
++     * Request connection to Secretkeeper. This is used by pVM to store rollback protected secrets.
++     * Note that this returns error if Secretkeeper is not supported on device. Guest should check
++     * that Secretkeeper is supported from Linux device tree before calling this.
++     */
++    ISecretkeeper getSecretkeeper();
++
++    /**
++     * Account the caller for the corresponding Secretkeeper entry.
++     * @param id Identifier for the secret held in Secretkeeper for the caller
++     */
++    void claimSecretkeeperEntry(in byte[64] id);
++
++    /**
++     * Return an interface for the rpc_servicemanager instance to use.
++     *
++     * This is how microdroid manager gets information about host services that are
++     * listening over vsock for clients in the guest VM.
++     * These host services are currently proxied by virtmgr so the services
++     * aren't aware of a vsock connection between the client and service.
++     */
++    IRpcProvider getHostRpcProvider();
++
++    /**
++     * Registers IGuestAgent
++     */
++    void registerGuestAgent(in IGuestAgent guestAgent);
++
++    /**
++     * Returns a KEK used to set up the encrypted store, or {@code null} if default mode of the
++     * encrypted store is used.
++     */
++    @nullable IEncryptedStoreKEK getEncryptedStoreKEK();
++
++    /** Forwards an atom to statsd. */
++    void forwardAtom(in Atom atom);
 +}
 diff --git a/gsi_stubs/vm_payload/Android.bp b/gsi_stubs/vm_payload/Android.bp
 new file mode 100644
