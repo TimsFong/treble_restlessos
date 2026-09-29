@@ -4,52 +4,51 @@ Date: Mon, 28 Sep 2026 22:37:59 +0100
 Subject: [PATCH 38/38] gsi stubs: vendor the avf rust crates used outside the
  virtualization tree
 
----
- .../phh/treble/gsi_stubs/cborutil/Android.bp  |  35 ++
- .../phh/treble/gsi_stubs/cborutil/src/lib.rs  | 134 ++++++
- device/phh/treble/gsi_stubs/dice/Android.bp   | 146 ++++++
- .../gsi_stubs/dice/bindgen/android/android.h  |  17 +
- .../treble/gsi_stubs/dice/bindgen/dice/dice.h |  19 +
- device/phh/treble/gsi_stubs/dice/src/bcc.rs   | 234 ++++++++++
- device/phh/treble/gsi_stubs/dice/src/dice.rs  | 420 ++++++++++++++++++
- device/phh/treble/gsi_stubs/dice/src/error.rs |  74 +++
- device/phh/treble/gsi_stubs/dice/src/lib.rs   |  50 +++
- device/phh/treble/gsi_stubs/dice/src/ops.rs   | 309 +++++++++++++
- device/phh/treble/gsi_stubs/dice/src/retry.rs | 207 +++++++++
- device/phh/treble/gsi_stubs/dm/Android.bp     |  31 ++
- device/phh/treble/gsi_stubs/dm/src/crypt.rs   | 191 ++++++++
- device/phh/treble/gsi_stubs/dm/src/lib.rs     | 409 +++++++++++++++++
- .../phh/treble/gsi_stubs/dm/src/loopdevice.rs | 269 +++++++++++
- .../treble/gsi_stubs/dm/src/loopdevice/sys.rs |  71 +++
- device/phh/treble/gsi_stubs/dm/src/sys.rs     |  99 +++++
- device/phh/treble/gsi_stubs/dm/src/util.rs    |  77 ++++
- device/phh/treble/gsi_stubs/dm/src/verity.rs  | 202 +++++++++
- 19 files changed, 2994 insertions(+)
- create mode 100644 device/phh/treble/gsi_stubs/cborutil/Android.bp
- create mode 100644 device/phh/treble/gsi_stubs/cborutil/src/lib.rs
- create mode 100644 device/phh/treble/gsi_stubs/dice/Android.bp
- create mode 100644 device/phh/treble/gsi_stubs/dice/bindgen/android/android.h
- create mode 100644 device/phh/treble/gsi_stubs/dice/bindgen/dice/dice.h
- create mode 100644 device/phh/treble/gsi_stubs/dice/src/bcc.rs
- create mode 100644 device/phh/treble/gsi_stubs/dice/src/dice.rs
- create mode 100644 device/phh/treble/gsi_stubs/dice/src/error.rs
- create mode 100644 device/phh/treble/gsi_stubs/dice/src/lib.rs
- create mode 100644 device/phh/treble/gsi_stubs/dice/src/ops.rs
- create mode 100644 device/phh/treble/gsi_stubs/dice/src/retry.rs
- create mode 100644 device/phh/treble/gsi_stubs/dm/Android.bp
- create mode 100644 device/phh/treble/gsi_stubs/dm/src/crypt.rs
- create mode 100644 device/phh/treble/gsi_stubs/dm/src/lib.rs
- create mode 100644 device/phh/treble/gsi_stubs/dm/src/loopdevice.rs
- create mode 100644 device/phh/treble/gsi_stubs/dm/src/loopdevice/sys.rs
- create mode 100644 device/phh/treble/gsi_stubs/dm/src/sys.rs
- create mode 100644 device/phh/treble/gsi_stubs/dm/src/util.rs
- create mode 100644 device/phh/treble/gsi_stubs/dm/src/verity.rs
+ gsi_stubs/cborutil/Android.bp            |  35 ++
+ gsi_stubs/cborutil/src/lib.rs            | 134 ++++++++
+ gsi_stubs/dice/Android.bp                | 204 +++++++++++
+ gsi_stubs/dice/bindgen/android/android.h |  17 +
+ gsi_stubs/dice/bindgen/dice/dice.h       |  19 +
+ gsi_stubs/dice/src/bcc.rs                | 234 +++++++++++++
+ gsi_stubs/dice/src/dice.rs               | 420 +++++++++++++++++++++++
+ gsi_stubs/dice/src/error.rs              |  74 ++++
+ gsi_stubs/dice/src/lib.rs                |  50 +++
+ gsi_stubs/dice/src/ops.rs                | 309 +++++++++++++++++
+ gsi_stubs/dice/src/retry.rs              | 207 +++++++++++
+ gsi_stubs/dm/Android.bp                  |  31 ++
+ gsi_stubs/dm/src/crypt.rs                | 191 +++++++++++
+ gsi_stubs/dm/src/lib.rs                  | 409 ++++++++++++++++++++++
+ gsi_stubs/dm/src/loopdevice.rs           | 269 +++++++++++++++
+ gsi_stubs/dm/src/loopdevice/sys.rs       |  71 ++++
+ gsi_stubs/dm/src/sys.rs                  |  99 ++++++
+ gsi_stubs/dm/src/util.rs                 |  77 +++++
+ gsi_stubs/dm/src/verity.rs               | 202 +++++++++++
+ 19 files changed, 3052 insertions(+)
+ create mode 100644 gsi_stubs/cborutil/Android.bp
+ create mode 100644 gsi_stubs/cborutil/src/lib.rs
+ create mode 100644 gsi_stubs/dice/Android.bp
+ create mode 100644 gsi_stubs/dice/bindgen/android/android.h
+ create mode 100644 gsi_stubs/dice/bindgen/dice/dice.h
+ create mode 100644 gsi_stubs/dice/src/bcc.rs
+ create mode 100644 gsi_stubs/dice/src/dice.rs
+ create mode 100644 gsi_stubs/dice/src/error.rs
+ create mode 100644 gsi_stubs/dice/src/lib.rs
+ create mode 100644 gsi_stubs/dice/src/ops.rs
+ create mode 100644 gsi_stubs/dice/src/retry.rs
+ create mode 100644 gsi_stubs/dm/Android.bp
+ create mode 100644 gsi_stubs/dm/src/crypt.rs
+ create mode 100644 gsi_stubs/dm/src/lib.rs
+ create mode 100644 gsi_stubs/dm/src/loopdevice.rs
+ create mode 100644 gsi_stubs/dm/src/loopdevice/sys.rs
+ create mode 100644 gsi_stubs/dm/src/sys.rs
+ create mode 100644 gsi_stubs/dm/src/util.rs
+ create mode 100644 gsi_stubs/dm/src/verity.rs
 
-diff --git a/device/phh/treble/gsi_stubs/cborutil/Android.bp b/device/phh/treble/gsi_stubs/cborutil/Android.bp
+diff --git a/gsi_stubs/cborutil/Android.bp b/gsi_stubs/cborutil/Android.bp
 new file mode 100644
 index 0000000..e13bb65
 --- /dev/null
-+++ b/device/phh/treble/gsi_stubs/cborutil/Android.bp
++++ b/gsi_stubs/cborutil/Android.bp
 @@ -0,0 +1,35 @@
 +// vendored from packages/modules/Virtualization/libs/cborutil. the
 +// virtualization sources are excluded from the gsi manifest sync but
@@ -86,11 +85,11 @@ index 0000000..e13bb65
 +    ],
 +    vendor_available: true,
 +}
-diff --git a/device/phh/treble/gsi_stubs/cborutil/src/lib.rs b/device/phh/treble/gsi_stubs/cborutil/src/lib.rs
+diff --git a/gsi_stubs/cborutil/src/lib.rs b/gsi_stubs/cborutil/src/lib.rs
 new file mode 100644
 index 0000000..4d308c1
 --- /dev/null
-+++ b/device/phh/treble/gsi_stubs/cborutil/src/lib.rs
++++ b/gsi_stubs/cborutil/src/lib.rs
 @@ -0,0 +1,134 @@
 +// Copyright 2023, The Android Open Source Project
 +//
@@ -226,18 +225,18 @@ index 0000000..4d308c1
 +        .ok_or(CoseError::UnexpectedItem("", "Label not found in CoseKey"))?
 +        .1)
 +}
-diff --git a/device/phh/treble/gsi_stubs/dice/Android.bp b/device/phh/treble/gsi_stubs/dice/Android.bp
+diff --git a/gsi_stubs/dice/Android.bp b/gsi_stubs/dice/Android.bp
 new file mode 100644
-index 0000000..2821bf1
+index 0000000..e4ba513
 --- /dev/null
-+++ b/device/phh/treble/gsi_stubs/dice/Android.bp
-@@ -0,0 +1,146 @@
++++ b/gsi_stubs/dice/Android.bp
+@@ -0,0 +1,204 @@
 +// vendored from packages/modules/Virtualization/libs/dice/open_dice. the
 +// virtualization sources are excluded from the gsi manifest sync but
-+// external/gsc-utils boot_param_test and the software_defined_vehicle
-+// test_dice_artifacts_builder link against libdiced_open_dice_multialg,
-+// so the multialg crate and its bindgen modules are reproduced here. the
-+// c libraries they bind live in external/open-dice.
++// external/gsc-utils boot_param_test, the software_defined_vehicle
++// test_dice_artifacts_builder and the system/authgraph tests link against
++// the diced_open_dice crate, so both variants and their bindgen modules
++// are reproduced here. the c libraries they bind live in external/open-dice.
 +
 +package {
 +    default_applicable_licenses: ["Android-Apache-2.0"],
@@ -271,6 +270,40 @@ index 0000000..2821bf1
 +    visibility: [
 +        "//system/software_defined_vehicle:__subpackages__",
 +        "//external/gsc-utils:__subpackages__",
++    ],
++    apex_available: [
++        "//apex_available:platform",
++        "com.android.virt",
++    ],
++    min_sdk_version: "35",
++}
++
++rust_library {
++    name: "libdiced_open_dice",
++    defaults: ["libdiced_open_dice_defaults"],
++    host_supported: true,
++    vendor_available: true,
++    rustlibs: [
++        "libcoset",
++        "libopen_dice_android_bindgen",
++        "libopen_dice_cbor_bindgen",
++        "libserde",
++        "libserde_bytes",
++        "libzeroize",
++    ],
++    features: [
++        "serde_derive",
++        "std",
++    ],
++    proc_macros: ["libserde_derive"],
++    shared_libs: [
++        "libcrypto",
++    ],
++    visibility: [
++        "//hardware/interfaces/security/secretkeeper/aidl/vts",
++        "//system/authgraph/tests:__subpackages__",
++        "//system/secretkeeper/client:__subpackages__",
++        "//system/software_defined_vehicle:__subpackages__",
 +    ],
 +    apex_available: [
 +        "//apex_available:platform",
@@ -339,6 +372,17 @@ index 0000000..2821bf1
 +    min_sdk_version: "35",
 +}
 +
++rust_bindgen {
++    name: "libopen_dice_cbor_bindgen",
++    defaults: [
++        "libopen_dice.rust_defaults",
++        "libopen_dice_cbor_bindgen.rust_defaults",
++    ],
++    whole_static_libs: ["libopen_dice_cbor"],
++    shared_libs: ["libcrypto"],
++    min_sdk_version: "35",
++}
++
 +rust_defaults {
 +    name: "libopen_dice_android_bindgen.rust_defaults",
 +    wrapper_src: "bindgen/android/android.h",
@@ -378,11 +422,24 @@ index 0000000..2821bf1
 +    whole_static_libs: ["libopen_dice_android_multialg"],
 +    min_sdk_version: "35",
 +}
-diff --git a/device/phh/treble/gsi_stubs/dice/bindgen/android/android.h b/device/phh/treble/gsi_stubs/dice/bindgen/android/android.h
++
++rust_bindgen {
++    name: "libopen_dice_android_bindgen",
++    defaults: [
++        "libopen_dice.rust_defaults",
++        "libopen_dice_android_bindgen.rust_defaults",
++    ],
++    rustlibs: [
++        "libopen_dice_cbor_bindgen",
++    ],
++    whole_static_libs: ["libopen_dice_android"],
++    min_sdk_version: "35",
++}
+diff --git a/gsi_stubs/dice/bindgen/android/android.h b/gsi_stubs/dice/bindgen/android/android.h
 new file mode 100644
 index 0000000..18f6476
 --- /dev/null
-+++ b/device/phh/treble/gsi_stubs/dice/bindgen/android/android.h
++++ b/gsi_stubs/dice/bindgen/android/android.h
 @@ -0,0 +1,17 @@
 +// Copyright 2021 Google LLC
 +//
@@ -401,11 +458,11 @@ index 0000000..18f6476
 +#pragma once
 +
 +#include <dice/android.h>
-diff --git a/device/phh/treble/gsi_stubs/dice/bindgen/dice/dice.h b/device/phh/treble/gsi_stubs/dice/bindgen/dice/dice.h
+diff --git a/gsi_stubs/dice/bindgen/dice/dice.h b/gsi_stubs/dice/bindgen/dice/dice.h
 new file mode 100644
 index 0000000..e6d5131
 --- /dev/null
-+++ b/device/phh/treble/gsi_stubs/dice/bindgen/dice/dice.h
++++ b/gsi_stubs/dice/bindgen/dice/dice.h
 @@ -0,0 +1,19 @@
 +// Copyright 2021 Google LLC
 +//
@@ -426,11 +483,11 @@ index 0000000..e6d5131
 +#include <dice/dice.h>
 +#include <dice/ops.h>
 +#include <dice/ops/trait/cose.h>
-diff --git a/device/phh/treble/gsi_stubs/dice/src/bcc.rs b/device/phh/treble/gsi_stubs/dice/src/bcc.rs
+diff --git a/gsi_stubs/dice/src/bcc.rs b/gsi_stubs/dice/src/bcc.rs
 new file mode 100644
 index 0000000..3d92191
 --- /dev/null
-+++ b/device/phh/treble/gsi_stubs/dice/src/bcc.rs
++++ b/gsi_stubs/dice/src/bcc.rs
 @@ -0,0 +1,234 @@
 +// Copyright 2023, The Android Open Source Project
 +//
@@ -666,11 +723,11 @@ index 0000000..3d92191
 +    };
 +    start.checked_add(len).and_then(|end| buffer.get(start..end)).ok_or(DiceError::PlatformError)
 +}
-diff --git a/device/phh/treble/gsi_stubs/dice/src/dice.rs b/device/phh/treble/gsi_stubs/dice/src/dice.rs
+diff --git a/gsi_stubs/dice/src/dice.rs b/gsi_stubs/dice/src/dice.rs
 new file mode 100644
 index 0000000..284764c
 --- /dev/null
-+++ b/device/phh/treble/gsi_stubs/dice/src/dice.rs
++++ b/gsi_stubs/dice/src/dice.rs
 @@ -0,0 +1,420 @@
 +// Copyright 2023, The Android Open Source Project
 +//
@@ -1092,11 +1149,11 @@ index 0000000..284764c
 +    })?;
 +    Ok(next_cdi_certificate_actual_size)
 +}
-diff --git a/device/phh/treble/gsi_stubs/dice/src/error.rs b/device/phh/treble/gsi_stubs/dice/src/error.rs
+diff --git a/gsi_stubs/dice/src/error.rs b/gsi_stubs/dice/src/error.rs
 new file mode 100644
 index 0000000..87d463e
 --- /dev/null
-+++ b/device/phh/treble/gsi_stubs/dice/src/error.rs
++++ b/gsi_stubs/dice/src/error.rs
 @@ -0,0 +1,74 @@
 +// Copyright 2023, The Android Open Source Project
 +//
@@ -1172,11 +1229,11 @@ index 0000000..87d463e
 +        DiceResult::kDiceResultPlatformError => Err(DiceError::PlatformError),
 +    }
 +}
-diff --git a/device/phh/treble/gsi_stubs/dice/src/lib.rs b/device/phh/treble/gsi_stubs/dice/src/lib.rs
+diff --git a/gsi_stubs/dice/src/lib.rs b/gsi_stubs/dice/src/lib.rs
 new file mode 100644
 index 0000000..f52eab9
 --- /dev/null
-+++ b/device/phh/treble/gsi_stubs/dice/src/lib.rs
++++ b/gsi_stubs/dice/src/lib.rs
 @@ -0,0 +1,50 @@
 +// Copyright 2023, The Android Open Source Project
 +//
@@ -1228,11 +1285,11 @@ index 0000000..f52eab9
 +    retry_generate_certificate, retry_sign_cose_sign1, retry_sign_cose_sign1_with_cdi_leaf_priv,
 +    OwnedDiceArtifacts,
 +};
-diff --git a/device/phh/treble/gsi_stubs/dice/src/ops.rs b/device/phh/treble/gsi_stubs/dice/src/ops.rs
+diff --git a/gsi_stubs/dice/src/ops.rs b/gsi_stubs/dice/src/ops.rs
 new file mode 100644
 index 0000000..66625af
 --- /dev/null
-+++ b/device/phh/treble/gsi_stubs/dice/src/ops.rs
++++ b/gsi_stubs/dice/src/ops.rs
 @@ -0,0 +1,309 @@
 +// Copyright 2023, The Android Open Source Project
 +//
@@ -1543,11 +1600,11 @@ index 0000000..66625af
 +    })?;
 +    Ok(certificate_actual_size)
 +}
-diff --git a/device/phh/treble/gsi_stubs/dice/src/retry.rs b/device/phh/treble/gsi_stubs/dice/src/retry.rs
+diff --git a/gsi_stubs/dice/src/retry.rs b/gsi_stubs/dice/src/retry.rs
 new file mode 100644
 index 0000000..9b8bfb6
 --- /dev/null
-+++ b/device/phh/treble/gsi_stubs/dice/src/retry.rs
++++ b/gsi_stubs/dice/src/retry.rs
 @@ -0,0 +1,207 @@
 +// Copyright 2023, The Android Open Source Project
 +//
@@ -1756,11 +1813,11 @@ index 0000000..9b8bfb6
 +        )
 +    })
 +}
-diff --git a/device/phh/treble/gsi_stubs/dm/Android.bp b/device/phh/treble/gsi_stubs/dm/Android.bp
+diff --git a/gsi_stubs/dm/Android.bp b/gsi_stubs/dm/Android.bp
 new file mode 100644
 index 0000000..8e220fb
 --- /dev/null
-+++ b/device/phh/treble/gsi_stubs/dm/Android.bp
++++ b/gsi_stubs/dm/Android.bp
 @@ -0,0 +1,31 @@
 +// vendored from packages/modules/Virtualization/libs/devicemapper. the
 +// virtualization sources are excluded from the gsi manifest sync but
@@ -1793,11 +1850,11 @@ index 0000000..8e220fb
 +    defaults: ["libdm_rust.defaults"],
 +    host_supported: true,
 +}
-diff --git a/device/phh/treble/gsi_stubs/dm/src/crypt.rs b/device/phh/treble/gsi_stubs/dm/src/crypt.rs
+diff --git a/gsi_stubs/dm/src/crypt.rs b/gsi_stubs/dm/src/crypt.rs
 new file mode 100644
 index 0000000..960bc78
 --- /dev/null
-+++ b/device/phh/treble/gsi_stubs/dm/src/crypt.rs
++++ b/gsi_stubs/dm/src/crypt.rs
 @@ -0,0 +1,191 @@
 +/*
 + * Copyright (C) 2022 The Android Open Source Project
@@ -1990,11 +2047,11 @@ index 0000000..960bc78
 +        Ok(DmCryptTarget(buf.into_boxed_slice()))
 +    }
 +}
-diff --git a/device/phh/treble/gsi_stubs/dm/src/lib.rs b/device/phh/treble/gsi_stubs/dm/src/lib.rs
+diff --git a/gsi_stubs/dm/src/lib.rs b/gsi_stubs/dm/src/lib.rs
 new file mode 100644
 index 0000000..199d975
 --- /dev/null
-+++ b/device/phh/treble/gsi_stubs/dm/src/lib.rs
++++ b/gsi_stubs/dm/src/lib.rs
 @@ -0,0 +1,409 @@
 +/*
 + * Copyright (C) 2021 The Android Open Source Project
@@ -2405,11 +2462,11 @@ index 0000000..199d975
 +        assert_ne!(inputimg, crypt.as_slice());
 +    }
 +}
-diff --git a/device/phh/treble/gsi_stubs/dm/src/loopdevice.rs b/device/phh/treble/gsi_stubs/dm/src/loopdevice.rs
+diff --git a/gsi_stubs/dm/src/loopdevice.rs b/gsi_stubs/dm/src/loopdevice.rs
 new file mode 100644
 index 0000000..c949a34
 --- /dev/null
-+++ b/device/phh/treble/gsi_stubs/dm/src/loopdevice.rs
++++ b/gsi_stubs/dm/src/loopdevice.rs
 @@ -0,0 +1,269 @@
 +/*
 + * Copyright (C) 2021 The Android Open Source Project
@@ -2680,11 +2737,11 @@ index 0000000..c949a34
 +        assert!(is_autoclear(&dev.path));
 +    }
 +}
-diff --git a/device/phh/treble/gsi_stubs/dm/src/loopdevice/sys.rs b/device/phh/treble/gsi_stubs/dm/src/loopdevice/sys.rs
+diff --git a/gsi_stubs/dm/src/loopdevice/sys.rs b/gsi_stubs/dm/src/loopdevice/sys.rs
 new file mode 100644
 index 0000000..47d2c08
 --- /dev/null
-+++ b/device/phh/treble/gsi_stubs/dm/src/loopdevice/sys.rs
++++ b/gsi_stubs/dm/src/loopdevice/sys.rs
 @@ -0,0 +1,71 @@
 +/*
 + * Copyright (C) 2021 The Android Open Source Project
@@ -2757,11 +2814,11 @@ index 0000000..47d2c08
 +
 +pub const LO_NAME_SIZE: usize = 64;
 +pub const LO_KEY_SIZE: usize = 32;
-diff --git a/device/phh/treble/gsi_stubs/dm/src/sys.rs b/device/phh/treble/gsi_stubs/dm/src/sys.rs
+diff --git a/gsi_stubs/dm/src/sys.rs b/gsi_stubs/dm/src/sys.rs
 new file mode 100644
 index 0000000..bbf7e45
 --- /dev/null
-+++ b/device/phh/treble/gsi_stubs/dm/src/sys.rs
++++ b/gsi_stubs/dm/src/sys.rs
 @@ -0,0 +1,99 @@
 +/*
 + * Copyright (C) 2021 The Android Open Source Project
@@ -2862,11 +2919,11 @@ index 0000000..bbf7e45
 +        const DM_INTERNAL_SUSPEND_FLAG = 1 << 18;
 +    }
 +}
-diff --git a/device/phh/treble/gsi_stubs/dm/src/util.rs b/device/phh/treble/gsi_stubs/dm/src/util.rs
+diff --git a/gsi_stubs/dm/src/util.rs b/gsi_stubs/dm/src/util.rs
 new file mode 100644
 index 0000000..cc071e4
 --- /dev/null
-+++ b/device/phh/treble/gsi_stubs/dm/src/util.rs
++++ b/gsi_stubs/dm/src/util.rs
 @@ -0,0 +1,77 @@
 +/*
 + * Copyright (C) 2021 The Android Open Source Project
@@ -2945,11 +3002,11 @@ index 0000000..cc071e4
 +    unsafe { _blkgetsize64(f.as_raw_fd(), &mut size) }?;
 +    Ok(size as u64)
 +}
-diff --git a/device/phh/treble/gsi_stubs/dm/src/verity.rs b/device/phh/treble/gsi_stubs/dm/src/verity.rs
+diff --git a/gsi_stubs/dm/src/verity.rs b/gsi_stubs/dm/src/verity.rs
 new file mode 100644
 index 0000000..8ce5c40
 --- /dev/null
-+++ b/device/phh/treble/gsi_stubs/dm/src/verity.rs
++++ b/gsi_stubs/dm/src/verity.rs
 @@ -0,0 +1,202 @@
 +/*
 + * Copyright (C) 2021 The Android Open Source Project

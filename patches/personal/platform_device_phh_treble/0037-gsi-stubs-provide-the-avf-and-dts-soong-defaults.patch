@@ -12,16 +12,15 @@ every feature flag in its default (disabled) state so soong analysis
 resolves without the virtualization tree present.
 
 the dtc host tool is unaffected; it lives in external/dtc.
----
- device/phh/treble/gsi_stubs/Android.bp | 19 +++++++++++++++++++
+ gsi_stubs/Android.bp | 19 +++++++++++++++++++
  1 file changed, 19 insertions(+)
- create mode 100644 device/phh/treble/gsi_stubs/Android.bp
+ create mode 100644 gsi_stubs/Android.bp
 
-diff --git a/device/phh/treble/gsi_stubs/Android.bp b/device/phh/treble/gsi_stubs/Android.bp
+diff --git a/gsi_stubs/Android.bp b/gsi_stubs/Android.bp
 new file mode 100644
 index 0000000..aba5b8b
 --- /dev/null
-+++ b/device/phh/treble/gsi_stubs/Android.bp
++++ b/gsi_stubs/Android.bp
 @@ -0,0 +1,19 @@
 +// stub soong defaults for modules outside the virtualization tree that
 +// reference the android virtualization framework build flags. the
@@ -42,6 +41,6 @@ index 0000000..aba5b8b
 +    tools: ["dtc"],
 +    cmd: "FILES=($(in)) && $(location dtc) -@ -I dts -O dtb $${FILES[-1]} -o $(out)",
 +}
---
+-- 
 2.55.0
 
