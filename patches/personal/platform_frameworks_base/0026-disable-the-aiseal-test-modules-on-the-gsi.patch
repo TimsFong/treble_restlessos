@@ -6,67 +6,11 @@ Subject: [PATCH] disable the aiseal test modules on the gsi
 the aiseal test payload links against the virtualization vm payload
 library, which is not built on the gsi because the virtualization
 sources are excluded from the manifest sync.
----
- media/java/android/media/MediaCodec.java | 11 ++++++++++-
- media/jni/android_media_MediaCodec.cpp   |  5 +++++
- tests/aiseal/Android.bp                  |  2 ++
- tests/aiseal/tenants/config/Android.bp   | 10 ++++++++++
- tests/aiseal/tenants/odim/Android.bp     |  4 ++++
- 5 files changed, 31 insertions(+), 1 deletion(-)
+ tests/aiseal/Android.bp                |  2 ++
+ tests/aiseal/tenants/config/Android.bp | 10 ++++++++++
+ tests/aiseal/tenants/odim/Android.bp   |  4 ++++
+ 3 files changed, 16 insertions(+)
 
-diff --git a/media/java/android/media/MediaCodec.java b/media/java/android/media/MediaCodec.java
-index d54414605..f4424a06f 100644
---- a/media/java/android/media/MediaCodec.java
-+++ b/media/java/android/media/MediaCodec.java
-@@ -2695,7 +2695,12 @@ final public class MediaCodec {
-      */
-     @NonNull
-     public static Surface createPersistentInputSurface() {
--        return native_createPersistentInputSurface();
-+        Surface s = native_createPersistentInputSurface();
-+        Log.w(TAG, "createPersistentInputSurface: returned=" + s
-+                + " class=" + (s != null ? s.getClass().getName() : "null")
-+                + " isPersistent=" + (s instanceof PersistentSurface)
-+                + " hashCode=" + (s != null ? s.hashCode() : -1));
-+        return s;
-     }
- 
-     static class PersistentSurface extends Surface {
-@@ -2722,6 +2727,10 @@ final public class MediaCodec {
-      *           {@link #createPersistentInputSurface}.
-      */
-     public void setInputSurface(@NonNull Surface surface) {
-+        Log.w(TAG, "setInputSurface: surface=" + surface
-+                + " class=" + (surface != null ? surface.getClass().getName() : "null")
-+                + " isPersistent=" + (surface instanceof PersistentSurface)
-+                + " hashCode=" + (surface != null ? surface.hashCode() : -1));
-         if (!(surface instanceof PersistentSurface)) {
-             throw new IllegalArgumentException("not a PersistentSurface");
-         }
-diff --git a/media/jni/android_media_MediaCodec.cpp b/media/jni/android_media_MediaCodec.cpp
-index 588e169f8..c9cda1e5d 100644
---- a/media/jni/android_media_MediaCodec.cpp
-+++ b/media/jni/android_media_MediaCodec.cpp
-@@ -1947,14 +1947,19 @@ static jobject android_media_MediaCodec_createPersistentInputSurface(
-         MediaCodec::CreatePersistentInputSurface();
- 
-     if (persistentSurface == NULL) {
-+        ALOGE("createPersistentInputSurface JNI: CreatePersistentInputSurface returned NULL");
-         return NULL;
-     }
-+    ALOGE("createPersistentInputSurface JNI: got PersistentSurface type=%d surface=%p",
-+          persistentSurface->getType(), persistentSurface->getSurface().get());
- 
-     sp<Surface> surface = mediaflagtools::surfaceTypeToSurface(
-         persistentSurface->getSurface(), true);
-     if (surface == NULL) {
-+        ALOGE("createPersistentInputSurface JNI: surfaceTypeToSurface returned NULL");
-         return NULL;
-     }
-+    ALOGE("createPersistentInputSurface JNI: surface converted OK surface=%p", surface.get());
- 
-     jobject object = env->NewObject(
-             gPersistentSurfaceClassInfo.clazz,
 diff --git a/tests/aiseal/Android.bp b/tests/aiseal/Android.bp
 index b0af6bfbd..766cdb204 100644
 --- a/tests/aiseal/Android.bp
