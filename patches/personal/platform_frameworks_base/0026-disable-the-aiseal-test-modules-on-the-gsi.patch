@@ -1,16 +1,72 @@
-From 7362245d5c25940a59570d7c9826fb40a5b36f0f Mon Sep 17 00:00:00 2001
+From 3004f678bfdc12b4747be8758ec2b88e8ea10bea Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 29 Sep 2026 12:44:36 +0100
-Subject: [PATCH 26/26] disable the aiseal test modules on the gsi
+Subject: [PATCH] disable the aiseal test modules on the gsi
 
 the aiseal test payload links against the virtualization vm payload
 library, which is not built on the gsi because the virtualization
 sources are excluded from the manifest sync.
 ---
- tests/aiseal/Android.bp              | 2 ++
- tests/aiseal/tenants/odim/Android.bp | 2 ++
- 2 files changed, 4 insertions(+)
+ media/java/android/media/MediaCodec.java | 11 ++++++++++-
+ media/jni/android_media_MediaCodec.cpp   |  5 +++++
+ tests/aiseal/Android.bp                  |  2 ++
+ tests/aiseal/tenants/config/Android.bp   | 10 ++++++++++
+ tests/aiseal/tenants/odim/Android.bp     |  4 ++++
+ 5 files changed, 31 insertions(+), 1 deletion(-)
 
+diff --git a/media/java/android/media/MediaCodec.java b/media/java/android/media/MediaCodec.java
+index d54414605..f4424a06f 100644
+--- a/media/java/android/media/MediaCodec.java
++++ b/media/java/android/media/MediaCodec.java
+@@ -2695,7 +2695,12 @@ final public class MediaCodec {
+      */
+     @NonNull
+     public static Surface createPersistentInputSurface() {
+-        return native_createPersistentInputSurface();
++        Surface s = native_createPersistentInputSurface();
++        Log.w(TAG, "createPersistentInputSurface: returned=" + s
++                + " class=" + (s != null ? s.getClass().getName() : "null")
++                + " isPersistent=" + (s instanceof PersistentSurface)
++                + " hashCode=" + (s != null ? s.hashCode() : -1));
++        return s;
+     }
+ 
+     static class PersistentSurface extends Surface {
+@@ -2722,6 +2727,10 @@ final public class MediaCodec {
+      *           {@link #createPersistentInputSurface}.
+      */
+     public void setInputSurface(@NonNull Surface surface) {
++        Log.w(TAG, "setInputSurface: surface=" + surface
++                + " class=" + (surface != null ? surface.getClass().getName() : "null")
++                + " isPersistent=" + (surface instanceof PersistentSurface)
++                + " hashCode=" + (surface != null ? surface.hashCode() : -1));
+         if (!(surface instanceof PersistentSurface)) {
+             throw new IllegalArgumentException("not a PersistentSurface");
+         }
+diff --git a/media/jni/android_media_MediaCodec.cpp b/media/jni/android_media_MediaCodec.cpp
+index 588e169f8..c9cda1e5d 100644
+--- a/media/jni/android_media_MediaCodec.cpp
++++ b/media/jni/android_media_MediaCodec.cpp
+@@ -1947,14 +1947,19 @@ static jobject android_media_MediaCodec_createPersistentInputSurface(
+         MediaCodec::CreatePersistentInputSurface();
+ 
+     if (persistentSurface == NULL) {
++        ALOGE("createPersistentInputSurface JNI: CreatePersistentInputSurface returned NULL");
+         return NULL;
+     }
++    ALOGE("createPersistentInputSurface JNI: got PersistentSurface type=%d surface=%p",
++          persistentSurface->getType(), persistentSurface->getSurface().get());
+ 
+     sp<Surface> surface = mediaflagtools::surfaceTypeToSurface(
+         persistentSurface->getSurface(), true);
+     if (surface == NULL) {
++        ALOGE("createPersistentInputSurface JNI: surfaceTypeToSurface returned NULL");
+         return NULL;
+     }
++    ALOGE("createPersistentInputSurface JNI: surface converted OK surface=%p", surface.get());
+ 
+     jobject object = env->NewObject(
+             gPersistentSurfaceClassInfo.clazz,
 diff --git a/tests/aiseal/Android.bp b/tests/aiseal/Android.bp
 index b0af6bfbd..766cdb204 100644
 --- a/tests/aiseal/Android.bp
@@ -24,8 +80,57 @@ index b0af6bfbd..766cdb204 100644
      team: "trendy_team_machine_learning",
      srcs: ["src/**/*.java"],
      platform_apis: true,
+diff --git a/tests/aiseal/tenants/config/Android.bp b/tests/aiseal/tenants/config/Android.bp
+index ea9194316..ddbb992c4 100644
+--- a/tests/aiseal/tenants/config/Android.bp
++++ b/tests/aiseal/tenants/config/Android.bp
+@@ -18,6 +18,8 @@ package {
+ 
+ genrule {
+     name: "aiseal_test_odim_version",
++    // the aiseal payload is not built on the gsi
++    enabled: false,
+     device_first_srcs: [
+         "//frameworks/base/tests/aiseal/tenants/odim:AiSealTestHelperAppOdim",
+     ],
+@@ -28,6 +30,8 @@ genrule {
+ 
+ genrule {
+     name: "aiseal_test_odim_expected_authority",
++    // the aiseal payload is not built on the gsi
++    enabled: false,
+     device_first_srcs: [
+         "//frameworks/base/tests/aiseal/tenants/odim:AiSealTestHelperAppOdim",
+     ],
+@@ -39,6 +43,8 @@ genrule {
+ 
+ genrule {
+     name: "aiseal_test_vm_config_json",
++    // the aiseal payload is not built on the gsi
++    enabled: false,
+     srcs: [
+         "assets/vm_config.json",
+         ":aiseal_test_odim_expected_authority",
+@@ -51,6 +57,8 @@ genrule {
+ 
+ genrule {
+     name: "aiseal_test_aiseal_config_json",
++    // the aiseal payload is not built on the gsi
++    enabled: false,
+     srcs: ["assets/aiseal_config.json"],
+     out: ["aiseal_config.json"],
+     cmd: "cp -f $(in) $(out)",
+@@ -58,6 +66,8 @@ genrule {
+ 
+ android_test_helper_app {
+     name: "AiSealTestTenantConfig",
++    // the aiseal payload is not built on the gsi
++    enabled: false,
+     asset_dirs: [],
+     assets: [
+         ":aiseal_test_vm_config_json",
 diff --git a/tests/aiseal/tenants/odim/Android.bp b/tests/aiseal/tenants/odim/Android.bp
-index 5ece36795..35bf4ebe6 100644
+index 5ece36795..a29262f32 100644
 --- a/tests/aiseal/tenants/odim/Android.bp
 +++ b/tests/aiseal/tenants/odim/Android.bp
 @@ -34,6 +34,8 @@ aidl_interface {
@@ -37,6 +142,15 @@ index 5ece36795..35bf4ebe6 100644
      srcs: ["native/main.rs"],
      edition: "2021",
      prefer_rlib: true,
+@@ -50,6 +52,8 @@ rust_ffi {
+ 
+ android_test_helper_app {
+     name: "AiSealTestHelperAppOdim",
++    // the aiseal payload is not built on the gsi
++    enabled: false,
+     srcs: ["java/**/*.java"],
+     platform_apis: true,
+     certificate: "platform",
 -- 
 2.55.0
 
