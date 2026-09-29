@@ -9,15 +9,15 @@ allocator and gate the mte/tbi and thread stack hardening choices
 behind vendor overridable properties; the toggles only exist because
 of the allocator swap, so they are one change.
 ---
- libc/Android.bp                   |  17 +--
+ libc/Android.bp                   |  17 +---
  libc/bionic/heap_tagging.cpp      |  14 +--
  libc/bionic/libc_init_dynamic.cpp |  86 ----------------
  libc/bionic/libc_init_mte.cpp     |  45 ++++----
  libc/bionic/malloc_common.h       |  20 ----
- libc/bionic/pthread_create.cpp    | 166 ++++++++++++++++++------------
+ libc/bionic/pthread_create.cpp    | 164 +++++++++++++++++++-----------
  libc/bionic/pthread_internal.h    |  12 +--
  libc/libc.map.txt                 |   1 -
- 8 files changed, 128 insertions(+), 233 deletions(-)
+ 8 files changed, 128 insertions(+), 231 deletions(-)
 
 diff --git a/libc/Android.bp b/libc/Android.bp
 index 42d5d93..3b0db1d 100644
@@ -331,7 +331,7 @@ index ef4b1a4..9604296 100644
  #endif
  
 diff --git a/libc/bionic/pthread_create.cpp b/libc/bionic/pthread_create.cpp
-index a55c6ce..b5938f6 100644
+index af5a1b6..07c8395 100644
 --- a/libc/bionic/pthread_create.cpp
 +++ b/libc/bionic/pthread_create.cpp
 @@ -29,8 +29,8 @@
@@ -362,16 +362,19 @@ index a55c6ce..b5938f6 100644
  // Allocate a thread's primary mapping. This mapping includes static TLS and
  // optionally a stack. Static TLS includes ELF TLS segments and the bionic_tls
  // struct.
-@@ -227,35 +238,40 @@ int __init_thread(pthread_internal_t* thread) {
+@@ -227,38 +238,45 @@ int __init_thread(pthread_internal_t* thread) {
  ThreadMapping __allocate_thread_mapping(size_t stack_size, size_t stack_guard_size) {
    const StaticTlsLayout& layout = __libc_shared_globals()->static_tls_layout;
  
--  // Address calculated using stack_size is passed to mprotect later, so make it page-aligned.
--  stack_size = __builtin_align_up(stack_size, page_size());
--  // Round up static TLS layout size to be multiple of page size as well.
--  size_t static_tls_layout_size = __builtin_align_up(layout.size(), page_size());
 +  const bool hardened = __gos_stack_hardening_enabled();
 +
+   // Address calculated using stack_size is passed to mprotect later, so make it page-aligned.
+   const size_t unaligned_stack_size = stack_size;
+   stack_size = __builtin_align_up(stack_size, page_size());
+   if (stack_size < unaligned_stack_size) return {};
+ 
+-  // Round up static TLS layout size to be multiple of page size as well.
+-  size_t static_tls_layout_size = __builtin_align_up(layout.size(), page_size());
 +  size_t static_tls_layout_size;
 +  size_t gap_size = 0;
 +  size_t thread_page_size = 0;
@@ -425,7 +428,7 @@ index a55c6ce..b5938f6 100644
    if (__builtin_add_overflow(mmap_size, static_tls_layout_size, &mmap_size)) return {};
    if (__builtin_add_overflow(mmap_size, PTHREAD_GUARD_SIZE, &mmap_size)) return {};
    // Add space for the dedicated libgen buffers page(s).
-@@ -268,7 +284,7 @@ ThreadMapping __allocate_thread_mapping(size_t stack_size, size_t stack_guard_si
+@@ -271,7 +289,7 @@ ThreadMapping __allocate_thread_mapping(size_t stack_size, size_t stack_guard_si
    if (mmap_size < unaligned_size) return {};
  
    // Create a new private anonymous map. Make the entire mapping PROT_NONE, then carve out
@@ -434,7 +437,7 @@ index a55c6ce..b5938f6 100644
    const int flags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE;
    char* const space = static_cast<char*>(mmap(nullptr, mmap_size, PROT_NONE, flags, -1, 0));
    if (space == MAP_FAILED) {
-@@ -285,39 +301,6 @@ ThreadMapping __allocate_thread_mapping(size_t stack_size, size_t stack_guard_si
+@@ -288,39 +306,6 @@ ThreadMapping __allocate_thread_mapping(size_t stack_size, size_t stack_guard_si
      prot_str = "R+W+MTE";
    }
  #endif
@@ -474,7 +477,7 @@ index a55c6ce..b5938f6 100644
  
    ThreadMapping result = {};
    result.mmap_base = space;
-@@ -325,12 +308,53 @@ ThreadMapping __allocate_thread_mapping(size_t stack_size, size_t stack_guard_si
+@@ -328,12 +313,53 @@ ThreadMapping __allocate_thread_mapping(size_t stack_size, size_t stack_guard_si
    result.mmap_base_unguarded = space + stack_guard_size;
    result.mmap_size_unguarded = mmap_size - stack_guard_size - PTHREAD_GUARD_SIZE;
    result.libgen_buffers = space + mmap_size - PTHREAD_GUARD_SIZE - libgen_buffers_padded_size;
@@ -533,7 +536,7 @@ index a55c6ce..b5938f6 100644
    return result;
  }
  
-@@ -342,6 +366,12 @@ static int __allocate_thread(pthread_attr_t* attr, bionic_tcb** tcbp, void** chi
+@@ -345,6 +371,12 @@ static int __allocate_thread(pthread_attr_t* attr, bionic_tcb** tcbp, void** chi
    if (attr->stack_base == nullptr) {
      // The caller didn't provide a stack, so allocate one.
  
@@ -546,7 +549,7 @@ index a55c6ce..b5938f6 100644
      // Make sure the guard size is a multiple of page_size().
      const size_t unaligned_guard_size = attr->guard_size;
      attr->guard_size = __builtin_align_up(attr->guard_size, page_size());
-@@ -360,8 +390,16 @@ static int __allocate_thread(pthread_attr_t* attr, bionic_tcb** tcbp, void** chi
+@@ -363,8 +395,16 @@ static int __allocate_thread(pthread_attr_t* attr, bionic_tcb** tcbp, void** chi
      stack_top = static_cast<char*>(attr->stack_base) + attr->stack_size;
    }
  
