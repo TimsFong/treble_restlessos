@@ -1,0 +1,42 @@
+From 7362245d5c25940a59570d7c9826fb40a5b36f0f Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Tue, 29 Sep 2026 12:44:36 +0100
+Subject: [PATCH 26/26] disable the aiseal test modules on the gsi
+
+the aiseal test payload links against the virtualization vm payload
+library, which is not built on the gsi because the virtualization
+sources are excluded from the manifest sync.
+---
+ tests/aiseal/Android.bp              | 2 ++
+ tests/aiseal/tenants/odim/Android.bp | 2 ++
+ 2 files changed, 4 insertions(+)
+
+diff --git a/tests/aiseal/Android.bp b/tests/aiseal/Android.bp
+index b0af6bfbd..766cdb204 100644
+--- a/tests/aiseal/Android.bp
++++ b/tests/aiseal/Android.bp
+@@ -21,6 +21,8 @@ filegroup {
+ 
+ android_test {
+     name: "AiSealTestCases",
++    // the aiseal payload is not built on the gsi
++    enabled: false,
+     team: "trendy_team_machine_learning",
+     srcs: ["src/**/*.java"],
+     platform_apis: true,
+diff --git a/tests/aiseal/tenants/odim/Android.bp b/tests/aiseal/tenants/odim/Android.bp
+index 5ece36795..35bf4ebe6 100644
+--- a/tests/aiseal/tenants/odim/Android.bp
++++ b/tests/aiseal/tenants/odim/Android.bp
+@@ -34,6 +34,8 @@ aidl_interface {
+ rust_ffi {
+     name: "libtest_aiseal_odim_payload",
+     crate_name: "test_aiseal_odim_payload",
++    // the virtualization stack is not built on the gsi
++    enabled: false,
+     srcs: ["native/main.rs"],
+     edition: "2021",
+     prefer_rlib: true,
+-- 
+2.55.0
+
