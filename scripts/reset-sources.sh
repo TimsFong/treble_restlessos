@@ -66,11 +66,19 @@ find "$SRC_DIR" -type d \( -name rebase-apply -o -name rebase-merge \) -exec rm 
 failures=0
 for project in $projects; do
   path="${SRC_DIR}/$(map_project_to_src "$project")"
-  if [[ ! -d "$path/.git" ]]; then
-    continue # vendored snapshot or not synced; snapshots restored below
+  # a patch dir may map to a subdirectory of a wider git repo (e.g.
+  # test/vts-testcase/hal/treble/vintf inside test/vts-testcase), so resolve
+  # the enclosing work tree and reset that. never touch anything outside
+  # the source tree -- a path that climbs to an ancestor work tree (the
+  # orchestration repo, or a vendored snapshot) is skipped instead.
+  if ! top="$(git -C "$path" rev-parse --show-toplevel 2>/dev/null)"; then
+    continue # not synced; snapshots restored below
+  fi
+  if [[ ! -d "$top/.git" || "$top" != "$SRC_DIR"* ]]; then
+    continue # vendored snapshot or outside the source tree
   fi
   if (
-    cd "$path" || exit 1
+    cd "$top" || exit 1
     git am --abort >/dev/null 2>&1 || true
     base="$(git rev-list --max-parents=0 HEAD | tail -1)"
     git reset --hard "$base" >/dev/null || exit 1

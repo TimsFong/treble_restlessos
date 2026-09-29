@@ -1,0 +1,77 @@
+From 2ec68f9c9395673e6f2a4dacd0a89e999d776bb7 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Tue, 29 Sep 2026 13:36:01 +0100
+Subject: [PATCH 3/3] build: drop the virtualization deps from the gsi product
+ images
+
+the virtualization sources are excluded from the gsi manifest sync,
+so the compos apex and the virtualizationservice aidl backends do not
+exist. remove them from the gsi system image defaults and the generic
+product dependency lists.
+---
+ target/product/generic/Android.bp | 2 --
+ target/product/gsi/Android.bp     | 8 --------
+ tools/otatools_package/Android.bp | 3 ---
+ 3 files changed, 13 deletions(-)
+
+diff --git a/target/product/generic/Android.bp b/target/product/generic/Android.bp
+index 12de408..4f944e4 100644
+--- a/target/product/generic/Android.bp
++++ b/target/product/generic/Android.bp
+@@ -1021,8 +1021,6 @@ system_image_defaults {
+         },
+         lib64: {
+             deps: [
+-                "android.system.virtualizationcommon-ndk",
+-                "android.system.virtualizationservice-ndk",
+                 "libgsi",
+                 "servicemanager",
+             ],
+diff --git a/target/product/gsi/Android.bp b/target/product/gsi/Android.bp
+index ffbe79e..80a99ac 100644
+--- a/target/product/gsi/Android.bp
++++ b/target/product/gsi/Android.bp
+@@ -179,14 +179,6 @@ android_filesystem_defaults {
+         "android.hidl.allocator@1.0-service",
+     ],
+     multilib: {
+-        lib64: {
+-            deps: [
+-                ///////////////////////////////////////////
+-                // AVF
+-                ///////////////////////////////////////////
+-                "com.android.compos",
+-            ],
+-        },
+         both: {
+             // PRODUCT_PACKAGES_SHIPPING_API_LEVEL_34
+             deps: ["android.hidl.memory@1.0-impl"],
+diff --git a/tools/otatools_package/Android.bp b/tools/otatools_package/Android.bp
+index 976d26b..e1aa4c8 100644
+--- a/tools/otatools_package/Android.bp
++++ b/tools/otatools_package/Android.bp
+@@ -152,7 +152,6 @@ cc_genrule {
+         ":host_init_verifier",
+         ":img2simg",
+         ":img_from_target_files",
+-        ":initrd_bootconfig",
+         ":lpmake",
+         ":lpunpack",
+         ":lz4",
+@@ -178,13 +177,11 @@ cc_genrule {
+         ":shflags",
+         ":sign_apex",
+         ":sign_target_files_apks",
+-        ":sign_virt_apex",
+         ":simg2img",
+         ":sload_f2fs",
+         ":soong_zip",
+         ":toybox",
+         ":treble_labeling_tests",
+-        ":trusty_vm_signing_tool",
+         ":tune2fs",
+         ":unpack_bootimg",
+         ":update_device",
+-- 
+2.55.0
+

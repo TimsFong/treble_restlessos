@@ -1,7 +1,7 @@
 From 7e6048ee379988bd7f151c8b95aadf8b52309c94 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 08:40:32 +0100
-Subject: [PATCH 2/2] gsi: product trim adjustments
+Subject: [PATCH 2/3] gsi: product trim adjustments
 
 gsi product trims: restore vndk compat symlinks for legacy vendor
 partitions, drop the stock deskclock, calculator and music apps in

@@ -1,7 +1,7 @@
 From 01ea000a16734fb846323ecba2f0a5b25ec0f0e4 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 29 Sep 2026 12:44:39 +0100
-Subject: [PATCH] disable the avf rkpd integration tests on the gsi
+Subject: [PATCH 1/1] disable the avf rkpd integration tests on the gsi
 
 the avf integration tests link against the microdroid test library,
 which is not built on the gsi because the virtualization sources are

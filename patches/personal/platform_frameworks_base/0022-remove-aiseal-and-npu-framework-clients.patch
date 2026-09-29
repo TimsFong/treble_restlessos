@@ -1,4 +1,4 @@
-From 0c12e87b78853b47c27feebce09c486e0c5d2c02 Mon Sep 17 00:00:00 2001
+From 0e6962fc07b1d3adc1273f1176da74b4eb7c325f Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 15:58:46 +0100
 Subject: [PATCH 22/26] remove aiseal and npu framework clients
@@ -15,9 +15,9 @@ manifest permission definitions stay because the shell package
 requests one of them.
 ---
  core/api/system-current.txt                   |  11 -
+ core/java/Android.bp                          |  23 --
  core/java/android/aiseal/AiSealException.java |  42 ----
  core/java/android/aiseal/AiSealManager.java   | 155 ------------
- .../android/aiseal/IAiSealHostService.aidl    |  25 --
  core/java/android/aiseal/OWNERS               |   3 -
  core/java/android/aiseal/TEST_MAPPING         |   7 -
  .../android/app/SystemServiceRegistry.java    |  20 --
@@ -27,10 +27,9 @@ requests one of them.
  services/aiseal/OWNERS                        |   7 -
  .../server/aiseal/AiSealSystemService.java    | 233 ------------------
  .../java/com/android/server/SystemServer.java |  21 --
- 13 files changed, 584 deletions(-)
+ 13 files changed, 582 deletions(-)
  delete mode 100644 core/java/android/aiseal/AiSealException.java
  delete mode 100644 core/java/android/aiseal/AiSealManager.java
- delete mode 100644 core/java/android/aiseal/IAiSealHostService.aidl
  delete mode 100644 core/java/android/aiseal/OWNERS
  delete mode 100644 core/java/android/aiseal/TEST_MAPPING
  delete mode 100644 core/java/android/npumanager/mock/NpuManagerFrameworkInitializer.java
@@ -60,6 +59,54 @@ index c0df87a64..e73e88ce3 100644
  package android.app {
  
    @UiContext public class Activity extends android.view.ContextThemeWrapper implements android.content.ComponentCallbacks2 android.view.KeyEvent.Callback android.view.LayoutInflater.Factory2 android.view.View.OnCreateContextMenuListener android.view.Window.Callback {
+diff --git a/core/java/Android.bp b/core/java/Android.bp
+index 4d07d0bc6..82147c972 100644
+--- a/core/java/Android.bp
++++ b/core/java/Android.bp
+@@ -23,7 +23,6 @@ filegroup {
+         ":messagequeue-gen",
+         ":ranging_stack_mock_initializer",
+         ":anomaly_detector_mock_initializer",
+-        ":npumanager_mock_initializer",
+         ":uprobestats_mock_initializer",
+         ":webapp_mock_initializer",
+         ":systemfeatures-gen-srcs",
+@@ -41,7 +40,6 @@ filegroup {
+         "android/os/IProcessInfoService.aidl",
+         "android/os/profiling/anomaly/mock/*.java",
+         "android/ranging/**/*.java",
+-        "android/npumanager/mock/**/*.java",
+         "android/content/pm/webapp/mock/**/*.java",
+     ],
+     visibility: ["//frameworks/base"],
+@@ -144,27 +142,6 @@ soong_config_module_type {
+     ],
+ }
+ 
+-// The actual NpuManagerFrameworkInitializer is present in
+-// packages/modules/NpuManager/framework.
+-// Mock NpuManagerFrameworkInitializer does nothing and allows to successfully build
+-// SystemServiceRegistry after registering for system service in SystemServiceRegistry both with
+-// and without build flag RELEASE_NPUMANAGER_MODULE enabled.
+-npumanager_framework_mock_init {
+-    name: "npumanager_mock_initializer",
+-    soong_config_variables: {
+-        release_npumanager_module: {
+-            cmd: "touch $(out)",
+-            // Adding an empty file as out is mandatory.
+-            out: ["android/npumanager/empty_npumanager_fw.txt"],
+-            conditions_default: {
+-                srcs: ["android/npumanager/mock/NpuManagerFrameworkInitializer.java"],
+-                cmd: "mkdir -p android/npumanager/; cp $(in) $(out);",
+-                out: ["android/npumanager/NpuManagerFrameworkInitializer.java"],
+-            },
+-        },
+-    },
+-}
+-
+ // Add selected MessageQueue.java implementation to srcs
+ soong_config_module_type {
+     name: "release_package_messagequeue_implementation_srcs",
 diff --git a/core/java/android/aiseal/AiSealException.java b/core/java/android/aiseal/AiSealException.java
 deleted file mode 100644
 index 2ea236fc3..000000000
@@ -268,37 +315,6 @@ index e1e80cafc..000000000
 -        }
 -        return service;
 -    }
--}
-diff --git a/core/java/android/aiseal/IAiSealHostService.aidl b/core/java/android/aiseal/IAiSealHostService.aidl
-deleted file mode 100644
-index 3b0da2486..000000000
---- a/core/java/android/aiseal/IAiSealHostService.aidl
-+++ /dev/null
-@@ -1,25 +0,0 @@
--/*
-- * Copyright (C) 2025 The Android Open Source Project
-- *
-- * Licensed under the Apache License, Version 2.0 (the "License");
-- * you may not use this file except in compliance with the License.
-- * You may obtain a copy of the License at
-- *
-- *      http://www.apache.org/licenses/LICENSE-2.0
-- *
-- * Unless required by applicable law or agreed to in writing, software
-- * distributed under the License is distributed on an "AS IS" BASIS,
-- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-- * See the License for the specific language governing permissions and
-- * limitations under the License.
-- */
--package android.aiseal;
--
--/**
-- * The service exposed by the AiSeal host service.
-- * @hide
-- */
--interface IAiSealHostService {
--    /** Open a connection to the service hosted inside the VM */
--    ParcelFileDescriptor connectService(String name);
 -}
 diff --git a/core/java/android/aiseal/OWNERS b/core/java/android/aiseal/OWNERS
 deleted file mode 100644

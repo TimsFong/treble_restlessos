@@ -4,8 +4,6 @@ Date: Mon, 28 Sep 2026 22:37:59 +0100
 Subject: [PATCH 38/38] gsi stubs: vendor the avf rust crates used outside the
  virtualization tree
 
----
----
  gsi_stubs/android_display_backend/Android.bp  |   78 +
  .../aidl/android/crosvm/DisplayConfig.aidl    |   25 +
  .../crosvm/ICrosvmAndroidDisplayService.aidl  |   41 +
@@ -53,6 +51,12 @@ Subject: [PATCH 38/38] gsi stubs: vendor the avf rust crates used outside the
  .../include/microdroid/metadata.h             |   33 +
  .../microdroid_payload_metadata/metadata.cc   |   74 +
  .../metadata.proto                            |   88 +
+ gsi_stubs/pvmfw_tool/Android.bp               |   23 +
+ gsi_stubs/pvmfw_tool/PvmfwTool.java           |   78 +
+ .../com/android/pvmfw/test/host/Pvmfw.java    |  220 ++
+ gsi_stubs/pvmfw_tool/pvmfw-tool-manifest.txt  |    2 +
+ gsi_stubs/trusty_tools/Android.bp             |   12 +
+ ...gen_instance_id_for_vm_with_trusted_hal.py |  169 +
  .../virtualizationservice_aidl/Android.bp     |   64 +
  .../system/virtualizationcommon/Atom.aidl     |   41 +
  .../virtualizationcommon/Certificate.aidl     |   27 +
@@ -64,7 +68,7 @@ Subject: [PATCH 38/38] gsi stubs: vendor the avf rust crates used outside the
  gsi_stubs/vm_payload/Android.bp               |   17 +
  gsi_stubs/vm_payload/include/vm_main.h        |   39 +
  gsi_stubs/vm_payload/include/vm_payload.h     |  320 ++
- 58 files changed, 9925 insertions(+)
+ 64 files changed, 10429 insertions(+)
  create mode 100644 gsi_stubs/android_display_backend/Android.bp
  create mode 100644 gsi_stubs/android_display_backend/aidl/android/crosvm/DisplayConfig.aidl
  create mode 100644 gsi_stubs/android_display_backend/aidl/android/crosvm/ICrosvmAndroidDisplayService.aidl
@@ -112,6 +116,12 @@ Subject: [PATCH 38/38] gsi stubs: vendor the avf rust crates used outside the
  create mode 100644 gsi_stubs/microdroid_payload_metadata/include/microdroid/metadata.h
  create mode 100644 gsi_stubs/microdroid_payload_metadata/metadata.cc
  create mode 100644 gsi_stubs/microdroid_payload_metadata/metadata.proto
+ create mode 100644 gsi_stubs/pvmfw_tool/Android.bp
+ create mode 100644 gsi_stubs/pvmfw_tool/PvmfwTool.java
+ create mode 100644 gsi_stubs/pvmfw_tool/java/com/android/pvmfw/test/host/Pvmfw.java
+ create mode 100644 gsi_stubs/pvmfw_tool/pvmfw-tool-manifest.txt
+ create mode 100644 gsi_stubs/trusty_tools/Android.bp
+ create mode 100644 gsi_stubs/trusty_tools/gen_instance_id_for_vm_with_trusted_hal.py
  create mode 100644 gsi_stubs/virtualizationservice_aidl/Android.bp
  create mode 100644 gsi_stubs/virtualizationservice_aidl/android/system/virtualizationcommon/Atom.aidl
  create mode 100644 gsi_stubs/virtualizationservice_aidl/android/system/virtualizationcommon/Certificate.aidl
@@ -9538,6 +9548,546 @@ index 0000000..f3d3dfd
 +  // payload sends the signal to do it.
 +  bool delay_encrypted_store_setup = 3;
 +}
+diff --git a/gsi_stubs/pvmfw_tool/Android.bp b/gsi_stubs/pvmfw_tool/Android.bp
+new file mode 100644
+index 0000000..44ef0fb
+--- /dev/null
++++ b/gsi_stubs/pvmfw_tool/Android.bp
+@@ -0,0 +1,23 @@
++// vendored from packages/modules/Virtualization tests/pvmfw. the
++// virtualization sources are excluded from the gsi manifest sync but the
++// trusty pvmfw test image generator still references the packaging tool.
++
++package {
++    default_applicable_licenses: ["Android-Apache-2.0"],
++}
++
++java_library_host {
++    name: "PvmfwHostTestLib",
++    srcs: ["java/**/*.java"],
++    static_libs: [
++        "androidx.annotation_annotation",
++        "truth",
++    ],
++}
++
++java_binary_host {
++    name: "pvmfw-tool",
++    manifest: "pvmfw-tool-manifest.txt",
++    srcs: ["PvmfwTool.java"],
++    static_libs: ["PvmfwHostTestLib"],
++}
+diff --git a/gsi_stubs/pvmfw_tool/PvmfwTool.java b/gsi_stubs/pvmfw_tool/PvmfwTool.java
+new file mode 100644
+index 0000000..5df0b48
+--- /dev/null
++++ b/gsi_stubs/pvmfw_tool/PvmfwTool.java
+@@ -0,0 +1,78 @@
++/*
++ * Copyright 2023 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.pvmfw;
++
++import com.android.pvmfw.test.host.Pvmfw;
++
++import java.io.File;
++import java.io.IOException;
++
++/** CLI for {@link com.android.microdroid.test.host.Pvmfw}. */
++public class PvmfwTool {
++    public static void printUsage() {
++        System.out.println("pvmfw-tool: Appends pvmfw.bin and config payloads.");
++        System.out.println("            Requires BCC. VM Reference DT, VM DTBO, and Debug policy");
++        System.out.println("            can optionally be specified");
++        System.out.println(
++                "Usage: pvmfw-tool <out> <pvmfw.bin> <dice.dat> [VM reference DT] [VM DTBO] [debug"
++                        + " policy]");
++    }
++
++    public static void main(String[] args) {
++        if (args.length < 3 || args.length > 6) {
++            printUsage();
++            System.exit(1);
++        }
++
++        File out = new File(args[0]);
++        File pvmfwBin = new File(args[1]);
++        File bccData = new File(args[2]);
++
++        File vmReferenceDt = null;
++        File vmDtbo = null;
++        File dp = null;
++        if (args.length > 3) {
++            vmReferenceDt = new File(args[3]);
++        }
++        if (args.length > 4) {
++            vmDtbo = new File(args[4]);
++        }
++        if (args.length > 5) {
++            dp = new File(args[5]);
++        }
++
++        try {
++            Pvmfw.Builder builder =
++                    new Pvmfw.Builder(pvmfwBin, bccData)
++                            .setVmReferenceDt(vmReferenceDt)
++                            .setDebugPolicyOverlay(dp)
++                            .setVmDtbo(vmDtbo);
++            if (vmReferenceDt == null) {
++                builder.setVersion(1, 1);
++            } else {
++                builder.setVersion(1, 2);
++            }
++
++            Pvmfw pvmfw = builder.build();
++            pvmfw.serialize(out);
++        } catch (IOException e) {
++            e.printStackTrace();
++            printUsage();
++            System.exit(1);
++        }
++    }
++}
+diff --git a/gsi_stubs/pvmfw_tool/java/com/android/pvmfw/test/host/Pvmfw.java b/gsi_stubs/pvmfw_tool/java/com/android/pvmfw/test/host/Pvmfw.java
+new file mode 100644
+index 0000000..5ae5186
+--- /dev/null
++++ b/gsi_stubs/pvmfw_tool/java/com/android/pvmfw/test/host/Pvmfw.java
+@@ -0,0 +1,220 @@
++/*
++ * Copyright 2023 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.pvmfw.test.host;
++
++import static com.google.common.truth.Truth.assertThat;
++
++import static java.nio.ByteOrder.LITTLE_ENDIAN;
++
++import androidx.annotation.NonNull;
++import androidx.annotation.Nullable;
++
++import java.io.File;
++import java.io.FileInputStream;
++import java.io.FileOutputStream;
++import java.io.IOException;
++import java.nio.ByteBuffer;
++import java.util.Objects;
++
++/** pvmfw.bin with custom config payloads on host. */
++public final class Pvmfw {
++    private static final int SIZE_8B = 8; // 8 bytes
++    private static final int SIZE_4K = 4 << 10; // 4 KiB, PAGE_SIZE
++    private static final int BUFFER_SIZE = 1024;
++    private static final int HEADER_MAGIC = 0x666d7670;
++    private static final int HEADER_DEFAULT_VERSION = makeVersion(1, 2);
++    private static final int HEADER_FLAGS = 0;
++
++    private static final int PVMFW_ENTRY_BCC = 0;
++    private static final int PVMFW_ENTRY_DP = 1;
++    private static final int PVMFW_ENTRY_VM_DTBO = 2;
++    private static final int PVMFW_ENTRY_VM_REFERENCE_DT = 3;
++    private static final int PVMFW_ENTRY_MAX = 4;
++
++    @NonNull private final File mPvmfwBinFile;
++    private final File[] mEntries;
++    private final int mEntryCnt;
++    private final int mVersion;
++
++    public static int makeVersion(int major, int minor) {
++        return ((major & 0xFFFF) << 16) | (minor & 0xFFFF);
++    }
++
++    private Pvmfw(
++            @NonNull File pvmfwBinFile,
++            @NonNull File bccFile,
++            @Nullable File debugPolicyFile,
++            @Nullable File vmDtboFile,
++            @Nullable File vmReferenceDtFile,
++            int version) {
++        mPvmfwBinFile = Objects.requireNonNull(pvmfwBinFile);
++
++        if (version >= makeVersion(1, 2)) {
++            mEntryCnt = PVMFW_ENTRY_VM_REFERENCE_DT + 1;
++        } else if (version >= makeVersion(1, 1)) {
++            mEntryCnt = PVMFW_ENTRY_VM_DTBO + 1;
++        } else {
++            mEntryCnt = PVMFW_ENTRY_DP + 1;
++        }
++
++        mEntries = new File[PVMFW_ENTRY_MAX];
++        mEntries[PVMFW_ENTRY_BCC] = Objects.requireNonNull(bccFile);
++        mEntries[PVMFW_ENTRY_DP] = debugPolicyFile;
++
++        if (PVMFW_ENTRY_VM_DTBO < mEntryCnt) {
++            mEntries[PVMFW_ENTRY_VM_DTBO] = vmDtboFile;
++        }
++        if (PVMFW_ENTRY_VM_REFERENCE_DT < mEntryCnt) {
++            mEntries[PVMFW_ENTRY_VM_REFERENCE_DT] = Objects.requireNonNull(vmReferenceDtFile);
++        }
++
++        mVersion = version;
++    }
++
++    /**
++     * Serializes pvmfw.bin and its config, as written in the <a
++     * href="https://android.googlesource.com/platform/packages/modules/Virtualization/+/master/pvmfw/README.md">README.md</a>
++     */
++    public void serialize(@NonNull File outFile) throws IOException {
++        Objects.requireNonNull(outFile);
++
++        int headerSize = alignTo(getHeaderSize(), SIZE_8B);
++        int[] entryOffsets = new int[mEntryCnt];
++        int[] entrySizes = new int[mEntryCnt];
++
++        entryOffsets[PVMFW_ENTRY_BCC] = headerSize;
++        entrySizes[PVMFW_ENTRY_BCC] = (int) mEntries[PVMFW_ENTRY_BCC].length();
++
++        for (int i = 1; i < mEntryCnt; i++) {
++            entryOffsets[i] = alignTo(entryOffsets[i - 1] + entrySizes[i - 1], SIZE_8B);
++            entrySizes[i] = mEntries[i] == null ? 0 : (int) mEntries[i].length();
++        }
++
++        int totalSize = alignTo(entryOffsets[mEntryCnt - 1] + entrySizes[mEntryCnt - 1], SIZE_8B);
++
++        ByteBuffer header = ByteBuffer.allocate(headerSize).order(LITTLE_ENDIAN);
++        header.putInt(HEADER_MAGIC);
++        header.putInt(mVersion);
++        header.putInt(totalSize);
++        header.putInt(HEADER_FLAGS);
++        for (int i = 0; i < mEntryCnt; i++) {
++            header.putInt(entryOffsets[i]);
++            header.putInt(entrySizes[i]);
++        }
++
++        try (FileOutputStream pvmfw = new FileOutputStream(outFile)) {
++            appendFile(pvmfw, mPvmfwBinFile);
++            padTo(pvmfw, SIZE_4K);
++
++            int baseOffset = (int) pvmfw.getChannel().size();
++            pvmfw.write(header.array());
++
++            for (int i = 0; i < mEntryCnt; i++) {
++                padTo(pvmfw, SIZE_8B);
++                if (mEntries[i] != null) {
++                    assertThat((int) pvmfw.getChannel().size() - baseOffset)
++                            .isEqualTo(entryOffsets[i]);
++                    appendFile(pvmfw, mEntries[i]);
++                }
++            }
++
++            padTo(pvmfw, SIZE_4K);
++        }
++    }
++
++    private void appendFile(@NonNull FileOutputStream out, @NonNull File inFile)
++            throws IOException {
++        try (FileInputStream in = new FileInputStream(inFile)) {
++            in.transferTo(out);
++        }
++    }
++
++    private void padTo(@NonNull FileOutputStream out, int size) throws IOException {
++        int streamSize = (int) out.getChannel().size();
++        for (int i = streamSize; i < alignTo(streamSize, size); i++) {
++            out.write(0); // write byte.
++        }
++    }
++
++    private int getHeaderSize() {
++        // Header + (entry offset, entry, size) * mEntryCnt
++        return Integer.BYTES * (4 + mEntryCnt * 2);
++    }
++
++    private static int alignTo(int x, int size) {
++        return (x + size - 1) & ~(size - 1);
++    }
++
++    private static int getMajorVersion(int version) {
++        return (version >> 16) & 0xFFFF;
++    }
++
++    private static int getMinorVersion(int version) {
++        return version & 0xFFFF;
++    }
++
++    /** Builder for {@link Pvmfw}. */
++    public static final class Builder {
++        @NonNull private final File mPvmfwBinFile;
++        @NonNull private final File mBccFile;
++        @Nullable private File mDebugPolicyFile;
++        @Nullable private File mVmDtboFile;
++        @Nullable private File mVmReferenceDtFile;
++        private int mVersion;
++
++        public Builder(@NonNull File pvmfwBinFile, @NonNull File bccFile) {
++            mPvmfwBinFile = Objects.requireNonNull(pvmfwBinFile);
++            mBccFile = Objects.requireNonNull(bccFile);
++            mVersion = HEADER_DEFAULT_VERSION;
++        }
++
++        @NonNull
++        public Builder setDebugPolicyOverlay(@Nullable File debugPolicyFile) {
++            mDebugPolicyFile = debugPolicyFile;
++            return this;
++        }
++
++        @NonNull
++        public Builder setVmDtbo(@Nullable File vmDtboFile) {
++            mVmDtboFile = vmDtboFile;
++            return this;
++        }
++
++        @NonNull
++        public Builder setVmReferenceDt(@Nullable File vmReferenceDtFile) {
++            mVmReferenceDtFile = vmReferenceDtFile;
++            return this;
++        }
++
++        @NonNull
++        public Builder setVersion(int major, int minor) {
++            mVersion = makeVersion(major, minor);
++            return this;
++        }
++
++        @NonNull
++        public Pvmfw build() {
++            return new Pvmfw(
++                    mPvmfwBinFile,
++                    mBccFile,
++                    mDebugPolicyFile,
++                    mVmDtboFile,
++                    mVmReferenceDtFile,
++                    mVersion);
++        }
++    }
++}
+diff --git a/gsi_stubs/pvmfw_tool/pvmfw-tool-manifest.txt b/gsi_stubs/pvmfw_tool/pvmfw-tool-manifest.txt
+new file mode 100644
+index 0000000..8b2535a
+--- /dev/null
++++ b/gsi_stubs/pvmfw_tool/pvmfw-tool-manifest.txt
+@@ -0,0 +1,2 @@
++Manifest-Version: 1.0
++Main-Class: com.android.pvmfw.PvmfwTool
+diff --git a/gsi_stubs/trusty_tools/Android.bp b/gsi_stubs/trusty_tools/Android.bp
+new file mode 100644
+index 0000000..7037495
+--- /dev/null
++++ b/gsi_stubs/trusty_tools/Android.bp
+@@ -0,0 +1,12 @@
++// vendored from packages/modules/Virtualization guest/trusty/tools. the
++// virtualization sources are excluded from the gsi manifest sync but the
++// trusty memshare vm instance id generator still references the tool.
++
++package {
++    default_applicable_licenses: ["Android-Apache-2.0"],
++}
++
++python_binary_host {
++    name: "gen_instance_id_for_vm_with_trusted_hal",
++    srcs: ["gen_instance_id_for_vm_with_trusted_hal.py"],
++}
+diff --git a/gsi_stubs/trusty_tools/gen_instance_id_for_vm_with_trusted_hal.py b/gsi_stubs/trusty_tools/gen_instance_id_for_vm_with_trusted_hal.py
+new file mode 100644
+index 0000000..571046f
+--- /dev/null
++++ b/gsi_stubs/trusty_tools/gen_instance_id_for_vm_with_trusted_hal.py
+@@ -0,0 +1,169 @@
++"""Generates a 64-byte instance ID for a VM interacting with Trusted HALs.
++
++This script reads a JSON configuration file, constructs the instance ID based
++on the defined structure, and writes the result to a binary file. It is
++designed for use in build systems and is silent on success.
++"""
++import argparse
++import json
++import uuid
++from typing import Any, Dict, TypedDict
++
++class InstanceIdConfig(TypedDict):
++    """Represents the structure of a VM Instance ID config after validation."""
++    is_vm_persistent: bool
++    vm_partition: str
++    vm_primary_uuid: uuid.UUID
++    vm_secondary_uuid: uuid.UUID
++
++# Expected schema for the VM Instance ID configuration file.
++INSTANCE_ID_SCHEMA: Dict[str, Dict[str, Any]] = {
++    'is_vm_persistent': {
++        'type': bool,
++        'required': True,
++    },
++    'vm_partition': {
++        'type': str,
++        'required': True,
++        'allowed_values': ['system'],
++    },
++    'vm_primary_uuid': {
++        'type': uuid.UUID,
++        'required': True,
++    },
++    'vm_secondary_uuid': {
++        'type': uuid.UUID,
++        'required': False,
++        # Default to a "zero" UUID if not provided.
++        'default': uuid.UUID('{00000000-0000-0000-0000-000000000000}'),
++    },
++}
++
++def validate_config(raw_config: Dict[str, Any]) -> InstanceIdConfig:
++    """Validates a raw config dict against the INSTANCE_ID_SCHEMA.
++
++    This function checks for required fields, applies defaults for optional
++    fields, and converts values to their expected types (e.g., string to UUID).
++
++    Args:
++        raw_config: The dictionary loaded from the JSON file.
++
++    Returns:
++        A validated dictionary that is guaranteed to conform to the schema.
++    """
++    unknown_fields = set(raw_config.keys()) - set(INSTANCE_ID_SCHEMA.keys())
++    if unknown_fields:
++        fields_str = ", ".join(f"'{field}'" for field in unknown_fields)
++        raise ValueError(
++            f"Configuration error: Unknown fields found: {fields_str}"
++        )
++
++    instance_id_config: Dict[str, Any] = {}
++    for field, schema in INSTANCE_ID_SCHEMA.items():
++        if schema['required'] and field not in raw_config:
++            raise ValueError(
++                f"Configuration error: Missing required field '{field}'."
++            )
++
++        value = raw_config.get(field, schema.get('default'))
++
++        expected_type = schema['type']
++        if expected_type == uuid.UUID and isinstance(value, str):
++            try:
++                value = uuid.UUID(value)
++            except (ValueError, TypeError) as exc:
++                raise ValueError(
++                    f"Config error: '{value}' is not a valid UUID "
++                    f"for '{field}'."
++                ) from exc
++
++        if not isinstance(value, expected_type):
++            raise ValueError(
++                f"Config error: Field '{field}' has wrong type. "
++                f"Expected {expected_type.__name__}, "
++                f"got {type(value).__name__}."
++            )
++
++        if 'allowed_values' in schema and value not in schema['allowed_values']:
++            raise ValueError(
++                f"Config error: Value '{value}' for field '{field}' is not "
++                f"supported. Allowed values are: {schema['allowed_values']}"
++            )
++
++        instance_id_config[field] = value
++    return InstanceIdConfig(**instance_id_config)
++
++def generate_instance_id(config: InstanceIdConfig) -> bytearray:
++    """Generates a 64-byte instance ID from a configuration dictionary.
++
++    The 64-byte structure is defined as follows:
++    - Bytes 0-15:   AVF Reserved Space
++      - Byte 0 (MSB): Set to 1 if the VM is persistent.
++      - Bytes 0-3:  Defines the owner partition ('system' supported).
++      - Bytes 4-15: Reserved for future use, must be zero.
++    - Bytes 16-31:  VM Identifier UUID (e.g., for Widevine, Test VM).
++    - Bytes 32-63:  VM-Specific Space
++      - Bytes 32-47: Optional UUID to differentiate a VM instance.
++      - Bytes 48-63: Reserved for future use, must be zero.
++
++    Args:
++        config: A dictionary containing the VM configuration.
++
++    Returns:
++        A 64-byte bytearray representing the Instance ID.
++    """
++    # Initialize a 64-byte array with all zeros. This handles all reserved
++    # and zero-padded fields by default.
++    instance_id = bytearray(64)
++
++    # --- Bytes 0-15: AVF Reserved Space ---
++    # TODO(b/441000033): Adjust the value and support other partitions once
++    # the plan about definition is finalized.
++    assert config['vm_partition'] == 'system', \
++        "Only 'system' partition is supported."
++
++    if config['is_vm_persistent']:
++        # Set the Most Significant Bit (MSB) of the first byte to 1.
++        instance_id[0] |= 0x80
++
++    # --- Bytes 16-63: UUIDs ---
++    # The config is assumed to be valid at this point.
++    instance_id[16:32] = config['vm_primary_uuid'].bytes
++    instance_id[32:48] = config['vm_secondary_uuid'].bytes
++    # Bytes 48-63 remain zeroed from initialization.
++
++    return instance_id
++
++def main() -> None:
++    parser = argparse.ArgumentParser(
++        description=(
++            "Convert a JSON file to a 64-byte instance ID for a VM "
++            "interacting with Trusted HALs. This script is designed for build "
++            "systems and is silent on success."
++        ),
++    )
++    parser.add_argument(
++        "-i", "--input",
++        dest="input_file",
++        required=True,
++        help="Path to the input JSON configuration file."
++    )
++    parser.add_argument(
++        "-o", "--output",
++        dest="output_file",
++        required=True,
++        help="Path to the output binary file."
++    )
++    args = parser.parse_args()
++
++    with open(args.input_file, 'r', encoding="utf-8") as f:
++        config_data = json.load(f)
++
++    instance_id_config = validate_config(config_data)
++    byte_array = generate_instance_id(instance_id_config)
++
++    with open(args.output_file, 'wb') as f:
++        f.write(byte_array)
++
++if __name__ == "__main__":
++    main()
 diff --git a/gsi_stubs/virtualizationservice_aidl/Android.bp b/gsi_stubs/virtualizationservice_aidl/Android.bp
 new file mode 100644
 index 0000000..1aa414a
