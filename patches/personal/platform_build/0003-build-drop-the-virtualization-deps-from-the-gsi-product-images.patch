@@ -1,19 +1,34 @@
-From 2ec68f9c9395673e6f2a4dacd0a89e999d776bb7 Mon Sep 17 00:00:00 2001
+From eb65a5762e0f6e04c06935f36baa1eedde268243 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 29 Sep 2026 13:36:01 +0100
-Subject: [PATCH 3/3] build: drop the virtualization deps from the gsi product
+Subject: [PATCH] build: drop the virtualization deps from the gsi product
  images
 
 the virtualization sources are excluded from the gsi manifest sync,
 so the compos apex and the virtualizationservice aidl backends do not
 exist. remove them from the gsi system image defaults and the generic
 product dependency lists.
----
- target/product/generic/Android.bp | 2 --
- target/product/gsi/Android.bp     | 8 --------
- tools/otatools_package/Android.bp | 3 ---
- 3 files changed, 13 deletions(-)
+ target/product/default_art_config.mk | 4 ----
+ target/product/generic/Android.bp    | 2 --
+ target/product/gsi/Android.bp        | 8 --------
+ tools/otatools_package/Android.bp    | 3 ---
+ 4 files changed, 17 deletions(-)
 
+diff --git a/target/product/default_art_config.mk b/target/product/default_art_config.mk
+index 4df5c26..2a5487c 100644
+--- a/target/product/default_art_config.mk
++++ b/target/product/default_art_config.mk
+@@ -220,10 +220,6 @@ ifeq ($(RELEASE_TELECOM_MAINLINE_MODULE),true)
+ 
+ endif
+ 
+-ifeq ($(RELEASE_AVF_ENABLE_LLPVM_CHANGES),true)
+-  PRODUCT_APEX_SYSTEM_SERVER_JARS += com.android.virt:service-virtualization
+-endif
+-
+ # List of jars on the platform that system_server loads dynamically using separate classloaders.
+ # Keep the list sorted library names.
+ PRODUCT_STANDALONE_SYSTEM_SERVER_JARS := \
 diff --git a/target/product/generic/Android.bp b/target/product/generic/Android.bp
 index 12de408..4f944e4 100644
 --- a/target/product/generic/Android.bp
