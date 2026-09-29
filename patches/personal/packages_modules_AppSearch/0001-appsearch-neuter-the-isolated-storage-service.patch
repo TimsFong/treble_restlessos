@@ -10,13 +10,13 @@ reports the feature unavailable, and drop the framework-virtualization
 stub dependencies so the module builds without the virtualization
 sources. the data migration helpers stay intact for the classic
 migration paths.
----
  apk/Android.bp                                |    1 -
  apk/AndroidManifest.xml                       |    8 -
  .../IsolatedStorageService.java               |  629 ---------
  service/Android.bp                            |    1 -
+ .../IcingSearchEngine.java                    |   29 +-
  .../IsolatedStorageServiceManager.java        | 1188 +----------------
- 5 files changed, 53 insertions(+), 1774 deletions(-)
+ 6 files changed, 55 insertions(+), 1801 deletions(-)
  delete mode 100644 apk/src/com/android/server/appsearch/isolated_storage_service/IsolatedStorageService.java
 
 diff --git a/apk/Android.bp b/apk/Android.bp
@@ -697,6 +697,67 @@ index 72a5603..8285a0c 100644
          "jspecify",
      ],
      optimize: {
+diff --git a/service/java/com/android/server/appsearch/isolated_storage_service/IcingSearchEngine.java b/service/java/com/android/server/appsearch/isolated_storage_service/IcingSearchEngine.java
+index 8883e33..f51835e 100644
+--- a/service/java/com/android/server/appsearch/isolated_storage_service/IcingSearchEngine.java
++++ b/service/java/com/android/server/appsearch/isolated_storage_service/IcingSearchEngine.java
+@@ -1513,10 +1513,7 @@ public final class IcingSearchEngine implements IcingSearchEngineInterface {
+ 
+     private @NonNull StatusProto futureGetFailureStatus(@NonNull Exception e) {
+         String message;
+-        if (mManager.isReconnecting()) {
+-            Log.w(TAG, "Reconnecting to isolated storage service", e);
+-            message = "reconnecting to isolated storage service, please wait and retry";
+-        } else {
++        {
+             Log.w(TAG, "Failed to get future result", e);
+             message = "vm isolated storage service/icing is not available: " + e.getMessage();
+         }
+@@ -1528,10 +1525,7 @@ public final class IcingSearchEngine implements IcingSearchEngineInterface {
+ 
+     private @NonNull StatusProto remoteExceptionStatus(@NonNull RemoteException e) {
+         String message;
+-        if (mManager.isReconnecting() && e instanceof DeadObjectException) {
+-            Log.w(TAG, "Reconnecting to isolated storage service", e);
+-            message = "reconnecting to isolated storage service, please wait and retry";
+-        } else {
++        {
+             Log.w(TAG, "Failed to call isolated storage service via binder", e);
+             message = "failed to call isolated storage service via binder: " + e.getMessage();
+         }
+@@ -1580,23 +1574,6 @@ public final class IcingSearchEngine implements IcingSearchEngineInterface {
+             Log.w(TAG, "Unable to get jvm free memory size due to error", e);
+         }
+ 
+-        long vmIsolatedStorageFreeMemoryKb = -1;
+-        try {
+-            vmIsolatedStorageFreeMemoryKb =
+-                    mManager.getVmIsolatedStorageServiceAsync()
+-                            .get(GET_VM_ISOLATED_STORAGE_SERVICE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+-                            .getAvailableMemory();
+-        } catch (ExecutionException | InterruptedException | TimeoutException e) {
+-            LogUtil.criticalError(TAG, "Unable to get vm isolated storage service", e);
+-        } catch (RemoteException e) {
+-            LogUtil.criticalError(TAG, "Unable to get vm isolated storage free memory size", e);
+-        } catch (OutOfMemoryError e) {
+-            LogUtil.criticalError(
+-                    TAG, "Unable to get vm isolated storage free memory size due to OOM error", e);
+-        } catch (Error e) {
+-            LogUtil.criticalError(
+-                    TAG, "Unable to get vm isolated storage free memory size due to error", e);
+-        }
+ 
+         LogUtil.criticalError(
+                 TAG,
+@@ -1604,8 +1581,6 @@ public final class IcingSearchEngine implements IcingSearchEngineInterface {
+                         + deviceFreeMemoryKb
+                         + " KB, Android JVM free memory (from Runtime): "
+                         + jvmFreeMemoryKb
+-                        + " KB, VM isolated storage free memory: "
+-                        + vmIsolatedStorageFreeMemoryKb
+                         + " KB.",
+                 oomError);
+     }
 diff --git a/service/java/com/android/server/appsearch/isolated_storage_service/IsolatedStorageServiceManager.java b/service/java/com/android/server/appsearch/isolated_storage_service/IsolatedStorageServiceManager.java
 index e99862d..b868dd0 100644
 --- a/service/java/com/android/server/appsearch/isolated_storage_service/IsolatedStorageServiceManager.java
