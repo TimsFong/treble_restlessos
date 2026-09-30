@@ -7,6 +7,32 @@ connected to the GrapheneOS project or its developers.
 
 For discussion and support, join the Telegram group: https://t.me/restlessos
 
+> [!WARNING]
+> **RestlessOS makes no security guarantees.** GrapheneOS's security model only works because it controls the entire device stack — hardware, firmware, bootloader and kernel — on a small set of audited Pixel devices. RestlessOS replaces the system partition only. Everything else on the device comes from your vendor, is unaudited, and is outside our control. If your threat model requires genuine hardware-backed security, use a supported device running upstream GrapheneOS.
+
+## Security expectations
+
+RestlessOS inherits GrapheneOS's hardened userspace, but a GSI can only ever be
+as trustworthy as the device it runs on. The parts that matter most are
+the parts we don't ship:
+
+- the vendor kernel and firmware are opaque binaries of unknown provenance,
+  frequently years out of date, and cannot be audited or replaced by us
+- the verified boot chain is rooted in your vendor's bootloader, not in keys
+  we control
+- hardware-backed attestation does not work, so neither you nor anyone else
+  can cryptographically verify the integrity of a running device
+
+In the current political climate this matters more than it used to: firmware
+and supply-chain-level interference by state and commercial actors is a
+documented reality, and a community project with no hardware audit capability
+cannot rule it out on your behalf. RestlessOS is a hardened, privacy-respecting
+system image — it is not a guarantee against a motivated, well-resourced
+adversary, and it should not be marketed or understood as one.
+
+If you need the full GrapheneOS security model, the only way to get it is
+supported hardware with upstream GrapheneOS installed as intended.
+
 ## Changes from GrapheneOS
 
 GrapheneOS targets Pixel devices with known hardware. A GSI must run on
@@ -18,6 +44,10 @@ made optional to avoid boot loops, crashes, or broken vendor drivers.
 A GSI ships only a system image; device-specific components come from the
 vendor partition. The following GrapheneOS features cannot be provided by
 any GSI:
+
+These are not optional omissions — they are the components GrapheneOS's
+security guarantees are built on. A GSI cannot reconstruct them, which is
+why RestlessOS offers hardening, not guarantees.
 
 - **firmware updates** — GrapheneOS ships firmware updates for Pixels alongside OS updates; RestlessOS uses whatever firmware the vendor partition provides
 - **kernel updates** — GrapheneOS ships patched kernels for Pixels; RestlessOS boots the vendor kernel
