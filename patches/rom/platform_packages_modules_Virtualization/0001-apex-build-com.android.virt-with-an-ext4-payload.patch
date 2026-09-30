@@ -1,0 +1,28 @@
+From 2bf3fdd2263166419a5c983fe77ca701ce697cc4 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Wed, 30 Sep 2026 16:36:17 +0100
+Subject: [PATCH] apex: build com.android.virt with an ext4 payload
+
+---
+ build/apex/Android.bp | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/build/apex/Android.bp b/build/apex/Android.bp
+index f24eb80..6dbbc99 100644
+--- a/build/apex/Android.bp
++++ b/build/apex/Android.bp
+@@ -201,10 +201,7 @@ apex_defaults {
+         default: unset,
+     }),
+ 
+-    payload_fs_type: "erofs",
+-    erofs: {
+-        pcluster_size: 32768,
+-    },
++    payload_fs_type: "ext4",
+ }
+ 
+ apex_defaults {
+-- 
+2.55.0
+
