@@ -1,4 +1,4 @@
-From 7e6048ee379988bd7f151c8b95aadf8b52309c94 Mon Sep 17 00:00:00 2001
+From aced2b068f1c24b9a69364da6b2eecbb5a3ccc1a Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 08:40:32 +0100
 Subject: [PATCH 2/3] gsi: product trim adjustments
@@ -16,10 +16,10 @@ com.android.virt apex once its bootclasspath fragment is gone.
 ---
  target/product/base_system.mk        |  1 -
  target/product/default_art_config.mk |  1 -
- target/product/gsi/Android.bp        | 40 +++++++++++++++++++++++++++-
- target/product/handheld_product.mk   |  5 ----
+ target/product/gsi/Android.bp        | 56 +++++++++++++++++++++++++++-
+ target/product/handheld_product.mk   |  5 ---
  target/product/handheld_system.mk    |  1 -
- 5 files changed, 39 insertions(+), 9 deletions(-)
+ 5 files changed, 55 insertions(+), 9 deletions(-)
 
 diff --git a/target/product/base_system.mk b/target/product/base_system.mk
 index 0c4d1e4..d3cdb89 100644
@@ -46,10 +46,10 @@ index 7689dd0..4df5c26 100644
  
  # When we release ondeviceintelligence in NeuralNetworks module
 diff --git a/target/product/gsi/Android.bp b/target/product/gsi/Android.bp
-index 1dea323..ffbe79e 100644
+index 1dea323..0ebd40b 100644
 --- a/target/product/gsi/Android.bp
 +++ b/target/product/gsi/Android.bp
-@@ -74,6 +74,44 @@ gsi_symlinks = [
+@@ -74,6 +74,60 @@ gsi_symlinks = [
      },
  ]
  
@@ -89,12 +89,28 @@ index 1dea323..ffbe79e 100644
 +        target: "/apex/com.android.vndk.v29/lib64",
 +        name: "lib64/vndk-sp-29",
 +    },
++    {
++        target: "/apex/com.android.vndk.v30/lib",
++        name: "lib/vndk-30",
++    },
++    {
++        target: "/apex/com.android.vndk.v30/lib64",
++        name: "lib64/vndk-30",
++    },
++    {
++        target: "/apex/com.android.vndk.v30/lib",
++        name: "lib/vndk-sp-30",
++    },
++    {
++        target: "/apex/com.android.vndk.v30/lib64",
++        name: "lib64/vndk-sp-30",
++    },
 +]
 +
  android_filesystem_defaults {
      name: "android_gsi_defaults",
      defaults: [
-@@ -81,7 +119,7 @@ android_filesystem_defaults {
+@@ -81,7 +135,7 @@ android_filesystem_defaults {
          "system_ext_image_defaults",
          "product_image_defaults",
      ],

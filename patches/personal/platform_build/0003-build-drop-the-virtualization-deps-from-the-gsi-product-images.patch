@@ -1,7 +1,7 @@
 From eb65a5762e0f6e04c06935f36baa1eedde268243 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 29 Sep 2026 13:36:01 +0100
-Subject: [PATCH] build: drop the virtualization deps from the gsi product
+Subject: [PATCH 3/3] build: drop the virtualization deps from the gsi product
  images
 
 the virtualization sources are excluded from the gsi manifest sync,
