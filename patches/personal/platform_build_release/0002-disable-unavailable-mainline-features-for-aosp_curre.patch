@@ -1,4 +1,4 @@
-From 979fdb713d83cddff104a432db681c38bcf2a06e Mon Sep 17 00:00:00 2001
+From 250cce626c88af04fd889abf3152b0d416469c3c Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 09:16:30 +0100
 Subject: [PATCH 2/2] disable unavailable mainline features for aosp_current
@@ -11,15 +11,17 @@ hardware the fleet does not have. pure cp2a flag flips; upstream
 product and classpath wiring is flag-gated, so everything drops out
 cleanly.
 ---
- .../mount_before_data_flag_values.textproto                   | 2 +-
- .../autonomous_repairing_initiation_flag_values.textproto     | 2 +-
- .../bugfix_autonomous_repairing_flag_values.textproto         | 2 +-
- flag_values/cp2a/RELEASE_AISEAL_FRAMEWORK.textproto           | 2 +-
- flag_values/cp2a/RELEASE_ANOMALY_DETECTOR.textproto           | 2 +-
- flag_values/cp2a/RELEASE_AVF_ENABLE_EARLY_VM.textproto        | 4 ++++
- flag_values/cp2a/RELEASE_NPUMANAGER_MODULE.textproto          | 2 +-
- flag_values/cp2a/RELEASE_RANGING_STACK.textproto              | 4 ++++
- 8 files changed, 14 insertions(+), 6 deletions(-)
+ .../mount_before_data_flag_values.textproto                 | 2 +-
+ .../autonomous_repairing_initiation_flag_values.textproto   | 2 +-
+ .../bugfix_autonomous_repairing_flag_values.textproto       | 2 +-
+ .../ranging_stack_enabled_flag_values.textproto             | 6 ++++++
+ flag_values/cp2a/RELEASE_AISEAL_FRAMEWORK.textproto         | 2 +-
+ flag_values/cp2a/RELEASE_ANOMALY_DETECTOR.textproto         | 2 +-
+ flag_values/cp2a/RELEASE_AVF_ENABLE_EARLY_VM.textproto      | 4 ++++
+ flag_values/cp2a/RELEASE_NPUMANAGER_MODULE.textproto        | 2 +-
+ flag_values/cp2a/RELEASE_RANGING_STACK.textproto            | 4 ++++
+ 9 files changed, 20 insertions(+), 6 deletions(-)
+ create mode 100644 aconfig/cp2a/com.android.ranging.flags/ranging_stack_enabled_flag_values.textproto
  create mode 100644 flag_values/cp2a/RELEASE_AVF_ENABLE_EARLY_VM.textproto
  create mode 100644 flag_values/cp2a/RELEASE_RANGING_STACK.textproto
 
@@ -59,6 +61,18 @@ index b5a555e..90b893e 100644
 +  state: DISABLED
    permission: READ_ONLY
  }
+diff --git a/aconfig/cp2a/com.android.ranging.flags/ranging_stack_enabled_flag_values.textproto b/aconfig/cp2a/com.android.ranging.flags/ranging_stack_enabled_flag_values.textproto
+new file mode 100644
+index 0000000..b474a3c
+--- /dev/null
++++ b/aconfig/cp2a/com.android.ranging.flags/ranging_stack_enabled_flag_values.textproto
+@@ -0,0 +1,6 @@
++flag_value {
++  package: "com.android.ranging.flags"
++  name: "ranging_stack_enabled"
++  state: DISABLED
++  permission: READ_ONLY
++}
 diff --git a/flag_values/cp2a/RELEASE_AISEAL_FRAMEWORK.textproto b/flag_values/cp2a/RELEASE_AISEAL_FRAMEWORK.textproto
 index 5a8ac64..636f8c9 100644
 --- a/flag_values/cp2a/RELEASE_AISEAL_FRAMEWORK.textproto

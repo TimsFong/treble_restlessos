@@ -1,4 +1,4 @@
-From 57eab2305e1140579b347b126538d16e50707c4d Mon Sep 17 00:00:00 2001
+From 1fb1c1338e925424f7e7a1b80869a4eecbfc7dd6 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 18 Feb 2026 09:04:54 +0000
 Subject: [PATCH 1/2] Enable navbar flip order option
