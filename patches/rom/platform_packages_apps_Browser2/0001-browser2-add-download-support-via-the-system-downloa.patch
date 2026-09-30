@@ -1,13 +1,13 @@
-From 0fd5bb8e3fe32b353c7b41b021eec1deed1a3ae9 Mon Sep 17 00:00:00 2001
+From ed502c1fa43eac615c1d65683765967e753ed7b7 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 30 Sep 2026 16:55:11 +0100
-Subject: [PATCH 1/2] browser2: add download support via the system downloadmanager
+Subject: [PATCH] browser2: add download support via the system downloadmanager
 
 Change-Id: Id2acb0d57a386bce1511252cec8022fa88f241b5
 ---
  res/values/strings.xml                        |  1 +
- .../webview_shell/WebViewBrowserActivity.java | 32 ++++++++++++++++++-
- 2 files changed, 32 insertions(+), 1 deletion(-)
+ .../webview_shell/WebViewBrowserActivity.java | 33 ++++++++++++++++++-
+ 2 files changed, 33 insertions(+), 1 deletion(-)
 
 diff --git a/res/values/strings.xml b/res/values/strings.xml
 index c39328a..25f0503 100644
@@ -22,7 +22,7 @@ index c39328a..25f0503 100644
      <string name="title_activity_thread_test">WebView Thread Test</string>
      <string name="title_activity_page_cycler">WebView Page Cycler Test</string>
 diff --git a/src/org/chromium/webview_shell/WebViewBrowserActivity.java b/src/org/chromium/webview_shell/WebViewBrowserActivity.java
-index cce295a..233b2fa 100644
+index cce295a..29c3139 100644
 --- a/src/org/chromium/webview_shell/WebViewBrowserActivity.java
 +++ b/src/org/chromium/webview_shell/WebViewBrowserActivity.java
 @@ -9,6 +9,7 @@ import android.annotation.SuppressLint;
@@ -41,11 +41,12 @@ index cce295a..233b2fa 100644
  import android.os.StrictMode;
  import android.print.PrintAttributes;
  import android.print.PrintDocumentAdapter;
-@@ -36,11 +38,13 @@ import android.view.ViewGroup;
+@@ -36,11 +38,14 @@ import android.view.ViewGroup;
  import android.view.ViewGroup.LayoutParams;
  import android.view.WindowManager;
  import android.view.inputmethod.InputMethodManager;
 +import android.webkit.CookieManager;
++import android.webkit.DownloadListener;
  import android.webkit.GeolocationPermissions;
  import android.webkit.PermissionRequest;
  import android.webkit.TracingConfig;
@@ -55,16 +56,16 @@ index cce295a..233b2fa 100644
  import android.webkit.WebSettings;
  import android.webkit.WebView;
  import android.webkit.WebViewClient;
-@@ -69,7 +73,7 @@ import java.util.regex.Pattern;
+@@ -69,7 +74,7 @@ import java.util.regex.Pattern;
   * It takes an optional URL as an argument, and displays the page. There is a URL bar
   * on top of the webview for manually specifying URLs to load.
   */
 -public class WebViewBrowserActivity extends Activity implements PopupMenu.OnMenuItemClickListener {
-+public class WebViewBrowserActivity extends Activity implements WebView.DownloadListener, PopupMenu.OnMenuItemClickListener {
++public class WebViewBrowserActivity extends Activity implements DownloadListener, PopupMenu.OnMenuItemClickListener {
      private static final String TAG = "WebViewShell";
  
      // Our imaginary Android permission to associate with the WebKit geo permission
-@@ -330,6 +334,8 @@ public class WebViewBrowserActivity extends Activity implements PopupMenu.OnMenu
+@@ -330,6 +335,8 @@ public class WebViewBrowserActivity extends Activity implements PopupMenu.OnMenu
          }
          setTitle(getResources().getString(R.string.title_activity_browser) + " " + mWebViewVersion);
  
@@ -73,7 +74,7 @@ index cce295a..233b2fa 100644
          webview.setWebViewClient(new WebViewClient() {
              @Override
              public void onPageStarted(WebView view, String url, Bitmap favicon) {
-@@ -508,6 +514,30 @@ public class WebViewBrowserActivity extends Activity implements PopupMenu.OnMenu
+@@ -508,6 +515,30 @@ public class WebViewBrowserActivity extends Activity implements PopupMenu.OnMenu
          popup.show();
      }
  
