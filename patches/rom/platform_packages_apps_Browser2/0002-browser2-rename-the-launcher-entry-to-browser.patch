@@ -1,0 +1,26 @@
+From 37e9018949d71179d51d59f7425f2330dc71224c Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Wed, 30 Sep 2026 16:55:11 +0100
+Subject: [PATCH 2/2] browser2: rename the launcher entry to browser
+
+Change-Id: I406e6ea50e17fe4897e7e11af12ae390b9982d7b
+---
+ res/values/strings.xml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index 9cd8843..a713170 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -9,7 +9,7 @@
+     <string name="title_activity_telemetry">WebView Telemetry</string>
+     <string name="title_activity_jank">WebView Jank Tester</string>
+     <string name="title_activity_startup_time">WebView Startup Time Tester</string>
+-    <string name="title_activity_browser">WebView Browser Tester</string>
++    <string name="title_activity_browser">Browser</string>
+     <string name="download_started">Downloading…</string>
+     <string name="title_activity_layout_test">WebView Layout Test</string>
+     <string name="title_activity_thread_test">WebView Thread Test</string>
+-- 
+2.55.0
+
