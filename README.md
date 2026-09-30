@@ -5,7 +5,7 @@ RestlessOS is an **unofficial**, **unaffiliated** fork of
 for Project Treble devices. It is not endorsed by, sponsored by, or in any way
 connected to the GrapheneOS project or its developers.
 
-For discussion and support, join the Telegram group: https://t.me/restlessos
+For discussion and support, join the Telegram group: <https://t.me/restlessos>
 
 > [!WARNING]
 > **RestlessOS makes no security guarantees.** GrapheneOS's security model only works because it controls the entire device stack — hardware, firmware, bootloader and kernel — on a small set of audited Pixel devices. RestlessOS replaces the system partition only. Everything else on the device comes from your vendor, is unaudited, and is outside our control. If your threat model requires genuine hardware-backed security, use a supported device running upstream GrapheneOS.
@@ -55,6 +55,7 @@ why RestlessOS offers hardening, not guarantees.
 - **GrapheneOS kernel hardening** — GrapheneOS's kernel patches target Pixel kernels specifically and cannot be applied to arbitrary vendor kernels
 
 ### Features removed
+
 - **hardened_malloc** — causes boot loops on devices with 39-bit virtual address space. replaced with AOSP Scudo.
 - **Auditor** — requires hardware attestation which doesn't work on GSI
 - **mtectrl / misctrl** — Pixel-specific memory tagging control; breaks vendor TEE drivers
@@ -64,10 +65,10 @@ why RestlessOS offers hardening, not guarantees.
 ### Features disabled by default
 
 These can be re-enabled in **TrebleApp → Hardening** or **Settings → Exploit protection**.
+
 - **MTE/TBI for vendor processes** — memory tagging breaks some vendor drivers
 - **hardened thread stacks** — non-standard memory layout breaks some vendor drivers
 - **secure (exec-based) app spawning** — breaks root solutions (Magisk / KernelSU)
-
 
 ## Delta Updates with zsync2
 
