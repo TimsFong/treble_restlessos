@@ -1,4 +1,4 @@
-From 82b728777e41b3cf99a425c289fa9dfa2e3f4600 Mon Sep 17 00:00:00 2001
+From 671217a6fe16a1c81d325e4f6488cb15a34111f3 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 30 Sep 2026 22:48:21 +0100
 Subject: [PATCH] init: keep the boot alive on vdc cryptfs failures for log
@@ -10,14 +10,43 @@ recovery reboot, log the failure and expose the reason via
 debug.init.vdc_failure_reason so the degraded boot can be diagnosed
 over adb.
 ---
- init/builtins.cpp | 27 ++++++++-------------------
- 1 file changed, 8 insertions(+), 19 deletions(-)
+ init/builtins.cpp | 38 ++++++++------------------------------
+ 1 file changed, 8 insertions(+), 30 deletions(-)
 
 diff --git a/init/builtins.cpp b/init/builtins.cpp
-index fb3da9a8f..b934969f3 100644
+index fb3da9a8f..4872dc8d3 100644
 --- a/init/builtins.cpp
 +++ b/init/builtins.cpp
-@@ -1159,25 +1159,14 @@ static Result<void> ExecVdcRebootOnFailure(const std::string& vdc_arg) {
+@@ -144,7 +144,6 @@ inline ErrorIgnoreEnoent ErrnoErrorIgnoreEnoent() {
+ 
+ [[clang::no_destroy]] std::vector<std::string> late_import_paths;
+ 
+-static constexpr int kTpmClearedStatus = 1;
+ static constexpr std::chrono::nanoseconds kCommandRetryTimeout = 5s;
+ 
+ static Result<void> reboot_into_recovery(const std::vector<std::string>& options) {
+@@ -1123,20 +1122,10 @@ static Result<void> do_wait_for_prop(const BuiltinArguments& args) {
+     return {};
+ }
+ 
+-// Check the hwsec-ownership-id from gscutil to see if the TPM has been cleared.
+-static bool CheckIfTpmCleared() {
+-    const std::array<const char*, 2> args = {"/system/bin/check_tpm_clear", nullptr};
+-    return (kTpmClearedStatus == ForkExecveAndWaitForCompletion(args[0], (char**)args.data()));
+-}
+-
+ static bool is_file_crypto() {
+     return android::base::GetProperty("ro.crypto.type", "") == "file";
+ }
+ 
+-static bool IsDeviceDesktop() {
+-    return android::base::GetProperty("ro.hardware", "") == "android-desktop";
+-}
+-
+ static Result<void> ExecWithFunctionOnFailure(const std::vector<std::string>& args,
+                                               std::function<void(const std::string&)> function) {
+     auto service = Service::MakeTemporaryOneshotService(args);
+@@ -1159,25 +1148,14 @@ static Result<void> ExecVdcRebootOnFailure(const std::string& vdc_arg) {
      auto reboot_reason = vdc_arg + "_failed";
  
      auto reboot = [reboot_reason](const std::string& message) {
