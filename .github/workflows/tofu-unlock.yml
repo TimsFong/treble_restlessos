@@ -1,0 +1,42 @@
+name: Unlock OpenTofu state
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: eu-west-2
+
+jobs:
+  unlock:
+    name: Remove stale state locks
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: List lock objects
+        run: |
+          aws s3 ls s3://gsi-build-tfstate/ --recursive | grep -E "tflock|lock.info" || \
+            echo "no lock objects found"
+
+      - name: Delete lock objects
+        run: |
+          for key in $(aws s3api list-objects-v2 --bucket gsi-build-tfstate \
+              --query "Contents[?contains(Key, 'tflock') || contains(Key, 'lock.info')].Key" \
+              --output text); do
+            [ "$key" = "None" ] && continue
+            echo "removing lock object: $key"
+            aws s3api delete-object --bucket gsi-build-tfstate --key "$key"
+          done
+
+      - name: Confirm
+        run: |
+          aws s3 ls s3://gsi-build-tfstate/ --recursive | grep -E "tflock|lock.info" && \
+            { echo "lock objects still present"; exit 1; } || echo "state unlocked"
