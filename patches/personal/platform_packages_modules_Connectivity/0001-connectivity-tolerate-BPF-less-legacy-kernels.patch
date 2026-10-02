@@ -1,4 +1,4 @@
-From 7585f60fac9765d6e766f395ba021c2e25326fb3 Mon Sep 17 00:00:00 2001
+From 1c1d4fbb837e3c740528fdea92042251dfe5f274 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 09:16:30 +0100
 Subject: [PATCH 1/3] connectivity: tolerate BPF-less legacy kernels
@@ -9,15 +9,15 @@ relaxes one fatal assumption for kernels without working bpf support,
 and later patches depend on the earlier ones' relaxed behaviour, so
 they are merged into one change.
 ---
- bpf/headers/include/bpf/BpfUtils.h            |  5 +-
- bpf/headers/include/bpf/KernelUtils.h         |  6 ++
- bpf/loader/NetBpfLoad.cpp                     | 90 +++++++++++--------
- bpf/netd/BpfHandler.cpp                       | 67 +++++++++-----
- .../src/android/net/BpfNetMapsUtils.java      | 67 ++++++++++++--
- .../server/net/NetworkStatsService.java       | 57 ++++++++++--
- ...id_server_connectivity_ClatCoordinator.cpp | 16 +---
- .../src/com/android/server/BpfNetMaps.java    | 12 +++
- 8 files changed, 234 insertions(+), 86 deletions(-)
+ bpf/headers/include/bpf/BpfUtils.h            |   5 +-
+ bpf/headers/include/bpf/KernelUtils.h         |   6 +
+ bpf/loader/NetBpfLoad.cpp                     |  90 ++++++------
+ bpf/netd/BpfHandler.cpp                       | 128 ++++++++++--------
+ .../src/android/net/BpfNetMapsUtils.java      |  67 ++++++++-
+ .../server/net/NetworkStatsService.java       |  57 +++++++-
+ ...id_server_connectivity_ClatCoordinator.cpp |  16 +--
+ .../src/com/android/server/BpfNetMaps.java    |  12 ++
+ 8 files changed, 263 insertions(+), 118 deletions(-)
 
 diff --git a/bpf/headers/include/bpf/BpfUtils.h b/bpf/headers/include/bpf/BpfUtils.h
 index 5ca52c6..86fe01e 100644
@@ -296,10 +296,122 @@ index 25cc01a..ec5f86a 100644
      }
  
 diff --git a/bpf/netd/BpfHandler.cpp b/bpf/netd/BpfHandler.cpp
-index 58fe97a..fdcc1ee 100644
+index 58fe97a..79100ae 100644
 --- a/bpf/netd/BpfHandler.cpp
 +++ b/bpf/netd/BpfHandler.cpp
-@@ -205,32 +205,46 @@ static Result<void> initPrograms(const char* cg2_path) {
+@@ -84,6 +84,16 @@ static Result<void> checkProgramAccessible(const char* programPath) {
+     return {};
+ }
+ 
++// gsix: on legacy kernels bpf programs may be missing or unloadable; netd must
++// survive degraded rather than abort and take zygote down with it via the
++// netd.rc onrestart hook
++static void warnIfFailed(const char* op, android::base::Result<void> res) {
++    if (!res.ok()) {
++        ALOGW("[GSI] %s failed on this kernel, continuing degraded: %s", op,
++              res.error().message().c_str());
++    }
++}
++
+ static void getsockoptTest() {
+     // getsockopt bpf hook is not called if the device is running in compat mode.
+     if (isKernel64Bit() != isUserspace64bit() && !isAtLeastKernelVersion(6, 13)) return;
+@@ -121,21 +131,21 @@ static Result<void> initPrograms(const char* cg2_path) {
+ 
+     // V bumps the kernel requirement up to 4.19
+     if (isAtLeastV && !isAtLeastKernelVersion(4, 19)) {
+-        return Error() << "V+ platform with kernel version < 4.19.0 is unsupported";
++        ALOGW("[GSI] V+ platform with kernel version < 4.19.0 is unsupported, continuing degraded");
+     }
+ 
+     // 25Q2 bumps the kernel requirement up to 5.4
+     if (isAtLeast25Q2 && !isAtLeastKernelVersion(5, 4)) {
+-        return Error() << "25Q2+ platform with kernel version < 5.4.0 is unsupported";
++        ALOGW("[GSI] 25Q2+ platform with kernel version < 5.4.0 is unsupported, continuing degraded");
+     }
+ 
+     unique_fd cg_fd(open(cg2_path, O_DIRECTORY | O_RDONLY | O_CLOEXEC));
+     if (!cg_fd.ok()) return Error(errno) << "Opening cgroup dir failed";
+ 
+-    RETURN_IF_NOT_OK(checkProgramAccessible(XT_BPF_ALLOWLIST_PROG_PATH));
+-    RETURN_IF_NOT_OK(checkProgramAccessible(XT_BPF_DENYLIST_PROG_PATH));
+-    RETURN_IF_NOT_OK(checkProgramAccessible(XT_BPF_EGRESS_PROG_PATH));
+-    RETURN_IF_NOT_OK(checkProgramAccessible(XT_BPF_INGRESS_PROG_PATH));
++    warnIfFailed("XT_BPF_ALLOWLIST_PROG_PATH", checkProgramAccessible(XT_BPF_ALLOWLIST_PROG_PATH));
++    warnIfFailed("XT_BPF_DENYLIST_PROG_PATH", checkProgramAccessible(XT_BPF_DENYLIST_PROG_PATH));
++    warnIfFailed("XT_BPF_EGRESS_PROG_PATH", checkProgramAccessible(XT_BPF_EGRESS_PROG_PATH));
++    warnIfFailed("XT_BPF_INGRESS_PROG_PATH", checkProgramAccessible(XT_BPF_INGRESS_PROG_PATH));
+     auto ret = attachProgramToCgroup(BPF_EGRESS_PROG_PATH, cg_fd, BPF_CGROUP_INET_EGRESS);
+     if (!ret.ok()) {
+         ALOGE("Failed loading egress program");
+@@ -151,86 +161,87 @@ static Result<void> initPrograms(const char* cg2_path) {
+     // TODO: delete the if statement once all devices should support cgroup
+     // socket filter (ie. the minimum kernel version required is 4.14).
+     if (isAtLeastKernelVersion(4, 14)) {
+-        RETURN_IF_NOT_OK(attachProgramToCgroup(CGROUP_INET_CREATE_PROG_PATH,
+-                                    cg_fd, BPF_CGROUP_INET_SOCK_CREATE));
++        warnIfFailed("CGROUP_INET_CREATE_PROG_PATH", attachProgramToCgroup(CGROUP_INET_CREATE_PROG_PATH, cg_fd, BPF_CGROUP_INET_SOCK_CREATE));
+     }
+ 
+     if (isAtLeastKernelVersion(5, 10)) {
+-        RETURN_IF_NOT_OK(attachProgramToCgroup(CGROUP_INET_RELEASE_PROG_PATH,
+-                                    cg_fd, BPF_CGROUP_INET_SOCK_RELEASE));
++        warnIfFailed("CGROUP_INET_RELEASE_PROG_PATH", attachProgramToCgroup(CGROUP_INET_RELEASE_PROG_PATH, cg_fd, BPF_CGROUP_INET_SOCK_RELEASE));
+     }
+ 
+     if (isAtLeastV) {
+         // V requires 4.19+, so technically this 2nd 'if' is not required, but it
+         // doesn't hurt us to try to support AOSP forks that try to support older kernels.
+         if (isAtLeastKernelVersion(4, 19)) {
+-            RETURN_IF_NOT_OK(attachProgramToCgroup(CGROUP_CONNECT4_PROG_PATH,
+-                                        cg_fd, BPF_CGROUP_INET4_CONNECT));
+-            RETURN_IF_NOT_OK(attachProgramToCgroup(CGROUP_CONNECT6_PROG_PATH,
+-                                        cg_fd, BPF_CGROUP_INET6_CONNECT));
+-            RETURN_IF_NOT_OK(attachProgramToCgroup(CGROUP_UDP4_RECVMSG_PROG_PATH,
+-                                        cg_fd, BPF_CGROUP_UDP4_RECVMSG));
+-            RETURN_IF_NOT_OK(attachProgramToCgroup(CGROUP_UDP6_RECVMSG_PROG_PATH,
+-                                        cg_fd, BPF_CGROUP_UDP6_RECVMSG));
+-            RETURN_IF_NOT_OK(attachProgramToCgroup(CGROUP_UDP4_SENDMSG_PROG_PATH,
+-                                        cg_fd, BPF_CGROUP_UDP4_SENDMSG));
+-            RETURN_IF_NOT_OK(attachProgramToCgroup(CGROUP_UDP6_SENDMSG_PROG_PATH,
+-                                        cg_fd, BPF_CGROUP_UDP6_SENDMSG));
++            warnIfFailed("CGROUP_CONNECT4_PROG_PATH", attachProgramToCgroup(CGROUP_CONNECT4_PROG_PATH, cg_fd, BPF_CGROUP_INET4_CONNECT));
++            warnIfFailed("CGROUP_CONNECT6_PROG_PATH", attachProgramToCgroup(CGROUP_CONNECT6_PROG_PATH, cg_fd, BPF_CGROUP_INET6_CONNECT));
++            warnIfFailed("CGROUP_UDP4_RECVMSG_PROG_PATH", attachProgramToCgroup(CGROUP_UDP4_RECVMSG_PROG_PATH, cg_fd, BPF_CGROUP_UDP4_RECVMSG));
++            warnIfFailed("CGROUP_UDP6_RECVMSG_PROG_PATH", attachProgramToCgroup(CGROUP_UDP6_RECVMSG_PROG_PATH, cg_fd, BPF_CGROUP_UDP6_RECVMSG));
++            warnIfFailed("CGROUP_UDP4_SENDMSG_PROG_PATH", attachProgramToCgroup(CGROUP_UDP4_SENDMSG_PROG_PATH, cg_fd, BPF_CGROUP_UDP4_SENDMSG));
++            warnIfFailed("CGROUP_UDP6_SENDMSG_PROG_PATH", attachProgramToCgroup(CGROUP_UDP6_SENDMSG_PROG_PATH, cg_fd, BPF_CGROUP_UDP6_SENDMSG));
+         }
+ 
+         // BPF_PROG_TYPE_CGROUP_SOCKOPT was introduced in 5.3, but
+         // https://github.com/torvalds/linux/commit/d8fe449a9c51a37d844ab607e14e2f5c657d3cf2 was
+         // added in 5.8, which is required.
+         if (isAtLeastKernelVersion(5, 8)) {
+-            RETURN_IF_NOT_OK(attachProgramToCgroup(CGROUP_GETSOCKOPT_PROG_PATH,
+-                                        cg_fd, BPF_CGROUP_GETSOCKOPT));
+-            RETURN_IF_NOT_OK(attachProgramToCgroup(CGROUP_SETSOCKOPT_PROG_PATH,
+-                                        cg_fd, BPF_CGROUP_SETSOCKOPT));
++            warnIfFailed("CGROUP_GETSOCKOPT_PROG_PATH", attachProgramToCgroup(CGROUP_GETSOCKOPT_PROG_PATH, cg_fd, BPF_CGROUP_GETSOCKOPT));
++            warnIfFailed("CGROUP_SETSOCKOPT_PROG_PATH", attachProgramToCgroup(CGROUP_SETSOCKOPT_PROG_PATH, cg_fd, BPF_CGROUP_SETSOCKOPT));
+             getsockoptTest();
+         }
+     }
+ 
+     if (isAtLeast26Q2) {
+         if (isAtLeastKernelVersion(6, 1) && !isAtLeastKernelVersion(6, 18)) {
+-            RETURN_IF_NOT_OK(attachProgramToCgroup(L4S_OPTIONS_SOCKOPS_PROG_PATH,
+-                                        cg_fd, BPF_CGROUP_SOCK_OPS));
++            warnIfFailed("L4S_OPTIONS_SOCKOPS_PROG_PATH", attachProgramToCgroup(L4S_OPTIONS_SOCKOPS_PROG_PATH, cg_fd, BPF_CGROUP_SOCK_OPS));
+         }
+     }
+ 
+     if (isAtLeastKernelVersion(4, 19)) {
+-        RETURN_IF_NOT_OK(attachProgramToCgroup(CGROUP_BIND4_PROG_PATH,
+-                cg_fd, BPF_CGROUP_INET4_BIND));
+-        RETURN_IF_NOT_OK(attachProgramToCgroup(CGROUP_BIND6_PROG_PATH,
+-                cg_fd, BPF_CGROUP_INET6_BIND));
++        warnIfFailed("CGROUP_BIND4_PROG_PATH", attachProgramToCgroup(CGROUP_BIND4_PROG_PATH, cg_fd, BPF_CGROUP_INET4_BIND));
++        warnIfFailed("CGROUP_BIND6_PROG_PATH", attachProgramToCgroup(CGROUP_BIND6_PROG_PATH, cg_fd, BPF_CGROUP_INET6_BIND));
  
          // This should trivially pass, since we just attached up above,
          // but BPF_PROG_QUERY is only implemented on 4.19+ kernels.
@@ -360,7 +472,7 @@ index 58fe97a..fdcc1ee 100644
          }
      }
  
-@@ -265,10 +279,11 @@ static inline void waitForNetProgsLoaded() {
+@@ -265,10 +276,11 @@ static inline void waitForNetProgsLoaded() {
          ALOGW("Waited %ds for init.svc.mdnsd_netbpfload=stopped, still waiting...", delay);
      }
      if (!mainlineNetBpfLoadDone()) {
@@ -376,7 +488,7 @@ index 58fe97a..fdcc1ee 100644
      }
      return;
  }
-@@ -292,7 +307,8 @@ static inline void waitForBpf() {
+@@ -292,7 +304,8 @@ static inline void waitForBpf() {
          // so waitForProgsLoaded() implies mainlineNetBpfLoadDone().
          if (!base::SetProperty("ctl.start", "mdnsd_netbpfload")) {
              ALOGE("Failed to set property ctl.start=mdnsd_netbpfload, see dmesg for reason.");
@@ -386,7 +498,7 @@ index 58fe97a..fdcc1ee 100644
          }
  
          ALOGI("Waiting for Networking BPF programs");
-@@ -466,9 +482,18 @@ static void mapLockTest(void) {
+@@ -466,9 +479,18 @@ static void mapLockTest(void) {
      const char * const m1 = BPF_NETD_PATH "map_netd_lock_array_test_map";
      const char * const m2 = BPF_NETD_PATH "map_netd_lock_hash_test_map";
  
