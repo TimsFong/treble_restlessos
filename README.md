@@ -109,7 +109,7 @@ rules not taking effect.
 **This cannot be fixed from the GSI** — the bug is in the vendor kernel
 binary. To fix it, patch the kernel using
 [mtk-bpf-patcher](https://github.com/R0rt1z2/mtk-bpf-patcher) by
-R0rt1z2. There is also an [APK version](https://github.com/Osanosa/ThemedManager/raw/refs/heads/main/mtk-bpf-patcher/release/mtk-bpf-patcher-release.apk)
+R0rt1z2. There is also an [APK version](https://xdaforums.com/attachments/mtk-bpf-patcher-release-apk.6238876/)
 that applies the same patch on-device (untested by us — use at your own
 risk). See the [XDA thread](https://xdaforums.com/t/mtk-4-14-kernel-bpf-patching.4717277/)
 for more information and discussion.
