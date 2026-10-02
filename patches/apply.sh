@@ -8,16 +8,18 @@ tree="$2"
 # vendored snapshots never resolves paths against a parent work tree
 srcroot=$(pwd)
 
+# empty tiers (or project dirs without .patch files) must no-op rather than
+# letting unexpanded globs leak through as literal paths
+shopt -s nullglob
+
 echo "Applying ${tree} patches:"
 [ -d "$patches/$tree" ] || {
     echo "  (no patches for tier '$tree', skipping)"
     exit 0
 }
 
-for project in $(
-    cd "$patches"/"$tree"
-    echo *
-); do
+for project in "$patches"/"$tree"/*/; do
+    project=$(basename "$project")
     echo "> ${project}"
     p="$(tr _ / <<<"$project" | sed -e 's;platform/;;g')"
     [ "$p" == build ] && p=build/make
