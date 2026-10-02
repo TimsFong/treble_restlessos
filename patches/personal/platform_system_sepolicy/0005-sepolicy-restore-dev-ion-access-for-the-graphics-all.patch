@@ -1,0 +1,49 @@
+From 511b773b9dee562dcf512b60dc3e2596a75969ce Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Fri, 2 Oct 2026 10:00:06 +0100
+Subject: [PATCH 5/5] sepolicy: restore /dev/ion access for the graphics allocator
+
+aosp's dma-buf migration dropped the ion rules and the /dev/ion label
+from platform policy, but legacy vendor grallocs (notably mtk) still
+allocate through /dev/ion.  on a gsi the allocator then fails to open
+the node with an EPERM that never shows as an avc, buffer allocation
+fails, and renderengine aborts on the resulting non-gpu-writable
+buffer -- a 5 second surfaceflinger crash loop that blocks boot.
+
+label the node and allow the allocator attribute rw access.
+---
+ private/file_contexts             | 1 +
+ private/hal_graphics_allocator.te | 5 +++++
+ 2 files changed, 6 insertions(+)
+
+diff --git a/private/file_contexts b/private/file_contexts
+index d9987aa66..b3194488e 100644
+--- a/private/file_contexts
++++ b/private/file_contexts
+@@ -134,6 +134,7 @@
+ /dev/hwbinder		u:object_r:hwbinder_device:s0
+ /dev/input(/.*)?	u:object_r:input_device:s0
+ /dev/iio:device[0-9]+   u:object_r:iio_device:s0
++/dev/ion		u:object_r:ion_device:s0
+ /dev/keychord   u:object_r:keychord_device:s0
+ /dev/loop-control	u:object_r:loop_control_device:s0
+ /dev/modem.*		u:object_r:radio_device:s0
+diff --git a/private/hal_graphics_allocator.te b/private/hal_graphics_allocator.te
+index 72a3a97f5..25fde66e3 100644
+--- a/private/hal_graphics_allocator.te
++++ b/private/hal_graphics_allocator.te
+@@ -9,6 +9,11 @@ allow hal_graphics_allocator_client same_process_hal_file:file { execute read op
+ # GPU device access
+ allow hal_graphics_allocator dmabuf_system_heap_device:chr_file r_file_perms;
+ 
++# legacy vendor grallocs (e.g. mtk) still allocate via /dev/ion; the dma-buf
++# migration removed the allocator rules for it, breaking buffer allocation
++# (and in turn booting) on such vendors
++allow hal_graphics_allocator ion_device:chr_file rw_file_perms;
++
+ # Access the secure heap
+ allow hal_graphics_allocator dmabuf_system_secure_heap_device:chr_file r_file_perms;
+ 
+-- 
+2.55.0
+
