@@ -109,7 +109,7 @@ rules not taking effect.
 **This cannot be fixed from the GSI** — the bug is in the vendor kernel
 binary. To fix it, patch the kernel using
 [mtk-bpf-patcher](https://github.com/R0rt1z2/mtk-bpf-patcher) by
-R0rt1z2. There is also an [APK version](https://github.com/Osanosa/ThemedManager/raw/refs/heads/main/mtk-bpf-patcher/release/mtk-bpf-patcher-release.apk)
+R0rt1z2. There is also an [APK version](https://xdaforums.com/attachments/mtk-bpf-patcher-release-apk.6238876/)
 that applies the same patch on-device (untested by us — use at your own
 risk). See the [XDA thread](https://xdaforums.com/t/mtk-4-14-kernel-bpf-patching.4717277/)
 for more information and discussion.
@@ -123,3 +123,4 @@ for more information and discussion.
 - **@Nullvalue** — for providing the inspiration to start working on this in the first place
 - **@Gero** — for the idea of the previous name
 - **[@Ziednaga](https://github.com/Ziednaga)** — for the RestlessOS logo and boot animation artwork
+- **[@clangsdorff](https://github.com/clangsdorff)** — for endless debugging help and code merged into the ROM
