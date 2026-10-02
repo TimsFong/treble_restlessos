@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <bool name="config_automatic_brightness_available">true</bool>
     <integer-array name="config_autoBrightnessLevels">
         <item>8</item>
         <item>15</item>
